@@ -1,0 +1,5 @@
+vivo Sans Regular is supplied from vivo's official vivo Sans download.
+Source: https://h5.vivo.com.cn/mall/vivoFont/vivo%20Sans.zip
+
+The font remains the property of its respective rightsholder and is subject
+to the accompanying vivo Sans font intellectual-property licence.
