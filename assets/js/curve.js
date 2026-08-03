@@ -27,6 +27,7 @@
       themeBackground.classList.toggle("dark", theme === "dark");
       themeBackground.classList.toggle("light", theme !== "dark");
     }
+    syncHomeTypeBarGapBackground();
   }
 
   var systemTheme = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
@@ -153,6 +154,69 @@
   window.addEventListener("scroll", scrollState, { passive: true });
   scrollState();
 
+  var homeTypeBar = document.querySelector(".home:not(.archive-page) .type-bar");
+  var homeBackground = document.querySelector("[data-background]");
+  var homeBackgroundGap = null;
+  if (homeTypeBar && homeBackground && homeTypeBar.parentNode) {
+    homeBackgroundGap = homeBackground.cloneNode(true);
+    homeBackgroundGap.removeAttribute("data-background");
+    homeBackgroundGap.classList.add("home-type-bar-gap");
+    homeBackgroundGap.hidden = true;
+    var gapCover = homeBackgroundGap.querySelector("[data-background-cover]");
+    if (gapCover) {
+      gapCover.removeAttribute("id");
+      gapCover.removeAttribute("data-background-cover");
+    }
+    homeTypeBar.parentNode.insertBefore(homeBackgroundGap, homeTypeBar);
+  }
+  function syncHomeTypeBarGapBackground() {
+    if (!homeBackground || !homeBackgroundGap) return;
+    Array.prototype.forEach.call(["patterns", "image", "dark", "light", "is-blurred"], function (name) {
+      homeBackgroundGap.classList.toggle(name, homeBackground.classList.contains(name));
+    });
+    var sourceCover = homeBackground.querySelector("[data-background-cover]");
+    var gapCover = homeBackgroundGap.querySelector(".cover");
+    if (sourceCover && gapCover) {
+      gapCover.className = sourceCover.className;
+      gapCover.hidden = sourceCover.hidden;
+      if (sourceCover.getAttribute("src")) gapCover.setAttribute("src", sourceCover.getAttribute("src"));
+      else gapCover.removeAttribute("src");
+    }
+  }
+  var homeTypeBarMarker = null;
+  if (homeTypeBar && homeTypeBar.parentNode) {
+    homeTypeBarMarker = document.createElement("span");
+    homeTypeBarMarker.className = "home-type-bar-marker";
+    homeTypeBarMarker.setAttribute("aria-hidden", "true");
+    homeTypeBar.parentNode.insertBefore(homeTypeBarMarker, homeTypeBar);
+  }
+  function syncHomeTypeBarFloat() {
+    if (!homeTypeBar || !homeTypeBarMarker) return;
+    if (!homeTypeBar.getClientRects().length) {
+      homeTypeBar.classList.remove("is-stuck");
+      if (homeBackgroundGap) homeBackgroundGap.hidden = true;
+      return;
+    }
+    var stickyTop = parseFloat(window.getComputedStyle(homeTypeBar).top) || 0;
+    var isStuck = homeTypeBarMarker.getBoundingClientRect().top <= stickyTop;
+    homeTypeBar.classList.toggle("is-stuck", isStuck);
+    if (homeBackgroundGap) {
+      var contentRect = homeTypeBar.parentNode.getBoundingClientRect();
+      var viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+      var gapLeft = Math.max(0, Math.floor(contentRect.left));
+      var gapRight = Math.min(viewportWidth, Math.ceil(contentRect.right));
+      homeBackgroundGap.style.setProperty("--home-type-bar-gap-left", gapLeft + "px");
+      homeBackgroundGap.style.setProperty("--home-type-bar-gap-right", Math.max(gapLeft, gapRight) + "px");
+      var coverHeight = Math.ceil(homeTypeBar.getBoundingClientRect().height / 2);
+      homeBackgroundGap.style.setProperty("--home-type-bar-cover-bottom", (stickyTop + coverHeight) + "px");
+      homeBackgroundGap.hidden = !isStuck;
+      if (isStuck) syncHomeTypeBarGapBackground();
+    }
+  }
+  window.addEventListener("scroll", syncHomeTypeBarFloat, { passive: true });
+  window.addEventListener("resize", syncHomeTypeBarFloat, { passive: true });
+  syncHomeTypeBarFloat();
+
   Array.prototype.forEach.call(document.querySelectorAll("[data-scroll-top], [data-scroll-home]"), function (item) {
     item.addEventListener("click", function (event) {
       event.preventDefault();
@@ -242,26 +306,27 @@
 
   function setHomeFilterChoice(home, target) {
     var links = home.querySelectorAll("[data-category-filter]");
-    var active = null;
     Array.prototype.forEach.call(links, function (item) {
       var isActive = samePath(homeFilterUrl(item), target);
       item.classList.toggle("choose", isActive);
-      if (isActive && !active) active = item;
     });
-    if (!active) return;
-    var allType = active.closest(".all-type");
-    if (!allType) return;
-    var indicator = allType.querySelector("[data-choice-indicator]");
-    if (!indicator) {
-      indicator = document.createElement("span");
-      indicator.className = "category-choice-indicator";
-      indicator.setAttribute("data-choice-indicator", "");
-      allType.insertBefore(indicator, allType.firstChild);
+  }
+
+  function scrollHomePaginationToStart(home, list) {
+    if (!home || !list) return;
+    var stage = list.closest(".post-list-stage") || list;
+    var typeBar = home.querySelector(".type-bar");
+    var nav = document.querySelector("[data-main-nav]");
+    var navHeight = nav ? nav.getBoundingClientRect().height : 60;
+    var topInset = navHeight + 16;
+    if (typeBar && window.getComputedStyle(typeBar).position === "sticky") {
+      var typeBarStyle = window.getComputedStyle(typeBar);
+      var stickyTop = parseFloat(typeBarStyle.top) || navHeight;
+      var typeBarGap = parseFloat(typeBarStyle.marginBottom) || 0;
+      topInset = stickyTop + typeBar.getBoundingClientRect().height + typeBarGap;
     }
-    var allRect = allType.getBoundingClientRect();
-    var itemRect = active.getBoundingClientRect();
-    indicator.style.width = itemRect.width + "px";
-    indicator.style.transform = "translateX(" + (itemRect.left - allRect.left + allType.scrollLeft) + "px)";
+    var stageTop = stage.getBoundingClientRect().top + (window.scrollY || 0);
+    window.scrollTo({ top: Math.max(0, stageTop - topInset), behavior: "smooth" });
   }
 
   function loadHomeFilter(home, target, clickedLink) {
@@ -269,6 +334,7 @@
     var list = home.querySelector(".post-lists");
     var pagination = home.querySelector(".pagination");
     var localLoading = home.querySelector("[data-category-loading]");
+    var isPagination = !!(clickedLink && clickedLink.closest && clickedLink.closest(".pagination"));
     if (!list) return;
     var filterRoot = home.dataset.categoryFilter;
     if (!filterRoot) {
@@ -301,7 +367,8 @@
         setHomeFilterChoice(home, filterRoot);
         home.dataset.categoryFilter = filterRoot;
         if (clickedLink) clickedLink.blur();
-        window.scrollTo({ top: Math.max(0, home.querySelector(".type-bar").getBoundingClientRect().top + window.scrollY - 80), behavior: "smooth" });
+        if (isPagination) scrollHomePaginationToStart(home, renderedList);
+        else window.scrollTo({ top: Math.max(0, home.querySelector(".type-bar").getBoundingClientRect().top + window.scrollY - 80), behavior: "smooth" });
       })
       .catch(function () {
         message("分类文章加载失败，请稍后重试");
@@ -439,12 +506,16 @@
       background.classList.toggle("dark", html.classList.contains("dark"));
       background.classList.toggle("light", !html.classList.contains("dark"));
       background.hidden = type === "close";
+      syncHomeTypeBarGapBackground();
     }
     if (backgroundCover) {
       backgroundCover.hidden = type !== "image" || !backgroundUrl;
       backgroundCover.classList.remove("loaded");
       if (type === "image" && backgroundUrl) {
-        backgroundCover.onload = function () { backgroundCover.classList.add("loaded"); };
+        backgroundCover.onload = function () {
+          backgroundCover.classList.add("loaded");
+          syncHomeTypeBarGapBackground();
+        };
         backgroundCover.onerror = function () {
           backgroundCover.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' version='1.1' width='100%25' height='100%25'%3E%3C/svg%3E";
           message("背景图片加载失败，请重新设置");
@@ -793,6 +864,7 @@
     html.classList.add(fontFamily);
     localStorage.setItem(key + "font", fontFamily);
     syncSettingChoices();
+    window.requestAnimationFrame(syncHomeTypeBarFloat);
   }
   Array.prototype.forEach.call(document.querySelectorAll("[data-setting-font]"), function (item) { item.addEventListener("click", function () { applyFontFamily(item.dataset.settingFont); }); });
   var savedFont = localStorage.getItem(key + "font");
@@ -809,11 +881,12 @@
       item.classList.toggle("fixed", infoPosition === "fixed");
       if (infoPosition !== "fixed") item.classList.remove("show");
     });
+    syncNextPost();
   }
   applyInfoPosition();
   Array.prototype.forEach.call(document.querySelectorAll("[data-setting-info]"), function (item) { item.addEventListener("click", function () { infoPosition = item.dataset.settingInfo; localStorage.setItem(key + "info-position", infoPosition); applyInfoPosition(); syncSettingChoices(); }); });
   var fontSize = parseInt(localStorage.getItem(key + "font-size") || "16", 10);
-  function applyFontSize() { fontSize = Math.max(14, Math.min(20, fontSize)); html.style.fontSize = fontSize + "px"; localStorage.setItem(key + "font-size", String(fontSize)); var value = document.querySelector("[data-font-value]"); if (value) value.textContent = fontSize; }
+  function applyFontSize() { fontSize = Math.max(14, Math.min(20, fontSize)); html.style.fontSize = fontSize + "px"; localStorage.setItem(key + "font-size", String(fontSize)); var value = document.querySelector("[data-font-value]"); if (value) value.textContent = fontSize; window.requestAnimationFrame(syncHomeTypeBarFloat); }
   applyFontSize();
   Array.prototype.forEach.call(document.querySelectorAll("[data-font-change]"), function (item) { item.addEventListener("click", function () { fontSize += Number(item.dataset.fontChange); applyFontSize(); }); });
   Array.prototype.forEach.call(document.querySelectorAll("[data-banner]"), function (item) { item.addEventListener("click", function () { var banner = document.getElementById("main-banner"); if (banner) { banner.classList.remove("half", "full"); banner.classList.add(item.dataset.banner); } localStorage.setItem(key + "banner", item.dataset.banner); }); });
@@ -828,15 +901,25 @@
   syncBannerArrow();
 
   var footer = document.getElementById("main-footer");
-  var leftMenu = document.querySelector(".left-menu");
-  if (footer && leftMenu) {
-    /* App.vue binds this state directly to Footer.vue's observer. Keep the
-     * observer, plus a geometry fallback so the fixed setting button always
-     * leaves as soon as the real footer crosses into the viewport. */
-    function syncLeftMenuWithFooter() {
+  var nextPost = document.querySelector("[data-next-post]");
+  var articleContent = document.getElementById("page-content");
+  var articleContentVisible = true;
+  var footerVisible = false;
+  var settingsButton = document.querySelector("[data-settings-open]");
+  var syncLeftMenuWithFooter = function () {};
+  function syncNextPost() {
+    if (!nextPost) return;
+    nextPost.classList.toggle("show", infoPosition === "fixed" && !articleContentVisible && !footerVisible);
+  }
+  if (footer && settingsButton) {
+    /* Match the original theme: the floating menu follows the visibility of
+     * the bottom copyright footer, not the preceding footer-link section. */
+    syncLeftMenuWithFooter = function () {
       var rect = footer.getBoundingClientRect();
-      leftMenu.classList.toggle("hidden", rect.top < window.innerHeight && rect.bottom > 0);
-    }
+      footerVisible = rect.top < window.innerHeight && rect.bottom > 0;
+      settingsButton.classList.toggle("footer-hidden", footerVisible);
+      syncNextPost();
+    };
     if ("IntersectionObserver" in window) {
       var footerObserver = new IntersectionObserver(function () { syncLeftMenuWithFooter(); });
       footerObserver.observe(footer);
@@ -845,13 +928,11 @@
     window.addEventListener("resize", syncLeftMenuWithFooter, { passive: true });
     syncLeftMenuWithFooter();
   }
-  var nextPost = document.querySelector("[data-next-post]");
-  var articleContent = document.getElementById("page-content");
   if (nextPost && articleContent && "IntersectionObserver" in window) {
     var articleObserver = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
-        var footerVisible = footer && footer.getBoundingClientRect().top < window.innerHeight;
-        nextPost.classList.toggle("show", infoPosition === "fixed" && !entry.isIntersecting && !footerVisible);
+        articleContentVisible = entry.isIntersecting;
+        syncNextPost();
       });
     });
     articleObserver.observe(articleContent);
@@ -888,7 +969,8 @@
       loading.hidden = true;
       loading.classList.remove("fade-leave-active", "fade-leave-to");
       if (app) { app.classList.remove("is-loading"); app.setAttribute("aria-busy", "false"); }
-      window.requestAnimationFrame(refreshHomeChoiceIndicators);
+      syncLeftMenuWithFooter();
+      window.requestAnimationFrame(syncHomeTypeBarFloat);
     }, 300);
   }
   function isInternalNavigation(link, event) {
@@ -921,12 +1003,6 @@
       window.scrollTo({ top: scrollTarget.hasAttribute("data-scroll-home") && banner ? banner.offsetHeight : 0, behavior: "smooth" });
       var rightMenuTarget = document.querySelector("[data-right-menu]");
       if (rightMenuTarget) rightMenuTarget.hidden = true;
-      return;
-    }
-    var choiceIndicator = event.target.closest && event.target.closest("[data-choice-indicator]");
-    if (choiceIndicator) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
       return;
     }
     var typeBar = event.target.closest && event.target.closest(".home:not(.archive-page) .type-bar");
@@ -973,15 +1049,5 @@
     }
     if (isInternalNavigation(link, event)) startLoading();
   }, true);
-  function refreshHomeChoiceIndicators() {
-    Array.prototype.forEach.call(document.querySelectorAll(".home:not(.archive-page)"), function (home) {
-      var selected = home.querySelector(".type-bar [data-category-filter].choose");
-      if (selected) setHomeFilterChoice(home, homeFilterUrl(selected));
-    });
-  }
-  window.requestAnimationFrame(refreshHomeChoiceIndicators);
-  window.addEventListener("resize", function () {
-    refreshHomeChoiceIndicators();
-  }, { passive: true });
   window.addEventListener("beforeunload", function () { startLoading(); });
 }());

@@ -1026,12 +1026,18 @@ a:hover {
   position: fixed;
   left: 20px;
   bottom: 20px;
-  z-index: 1002;
-  transition: opacity 0.3s, transform 0.3s;
+  z-index: 1100;
 }
-.left-menu.hidden {
+.left-menu > .settings > .set-btn {
+  will-change: width, opacity, transform;
+  transition: width 0.3s ease, opacity 0.35s ease, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0s;
+}
+.left-menu > .settings > .set-btn.footer-hidden {
   opacity: 0;
-  transform: translateY(100px);
+  transform: translateY(calc(100% + 20px));
+  visibility: hidden;
+  pointer-events: none;
+  transition-delay: 0s, 0s, 0s, 0.35s;
 }
 
 /* components/Aside/Widgets/ArticleGPT.vue */
@@ -2444,10 +2450,11 @@ a:hover {
   animation: fade-up 0.6s 0.4s backwards;
   cursor: pointer;
   overflow: hidden;
-  height: 200px;
+  min-height: 12.5rem;
 }
 .post-lists .post-item .post-cover {
   flex: 0 0 35%;
+  min-height: 12.5rem;
   overflow: hidden;
   transform: translateZ(0);
 }
@@ -2462,6 +2469,7 @@ a:hover {
 }
 .post-lists .post-item .post-content {
   flex: 1;
+  min-width: 0;
   padding: 1.6rem 2rem;
   display: flex;
   flex-direction: column;
@@ -2472,7 +2480,7 @@ a:hover {
   flex-wrap: wrap;
   width: 100%;
   color: var(--main-font-second-color);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 .post-lists .post-item .post-content .post-category .cat-name {
   display: flex;
@@ -2493,13 +2501,14 @@ a:hover {
   color: var(--main-color);
 }
 .post-lists .post-item .post-content .post-title {
-  font-size: 20px;
-  line-height: 30px;
+  font-size: 1.25rem;
+  line-height: 1.5;
   font-weight: bold;
   margin: 0.6rem 0;
   transition: color 0.3s;
   display: -webkit-box;
   overflow: hidden;
+  overflow-wrap: anywhere;
   word-break: break-all;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -2508,7 +2517,7 @@ a:hover {
   margin-top: -0.4rem;
   margin-bottom: 0.8rem;
   opacity: 0.8;
-  line-height: 30px;
+  line-height: 1.5;
   display: -webkit-box;
   overflow: hidden;
   word-break: break-all;
@@ -2516,6 +2525,7 @@ a:hover {
   -webkit-line-clamp: 2;
 }
 .post-lists .post-item .post-content .post-meta {
+  min-width: 0;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -2523,6 +2533,7 @@ a:hover {
   color: var(--main-font-second-color);
 }
 .post-lists .post-item .post-content .post-meta .post-tags {
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   opacity: 0.8;
@@ -2556,8 +2567,9 @@ a:hover {
   }
 }
 .post-lists .post-item .post-content .post-meta .post-time {
+  flex-shrink: 0;
   opacity: 0.6;
-  font-size: 13px;
+  font-size: 0.8125rem;
   white-space: nowrap;
 }
 .post-lists .post-item.simple {
@@ -2582,12 +2594,13 @@ a:hover {
 @media (max-width: 768px) {
   .post-lists .post-item {
     flex-direction: column;
-    height: auto;
+    min-height: 0;
   }
   .post-lists .post-item .post-cover {
     flex: none;
     width: 100%;
-    height: 200px;
+    height: 12.5rem;
+    min-height: 0;
   }
 }
 .post-lists .post-item.cover-left {
@@ -2620,7 +2633,8 @@ a:hover {
 .post-lists.layout-grid .post-item .post-cover {
   flex: none;
   width: 100%;
-  height: 225px;
+  height: 14.0625rem;
+  min-height: 0;
 }
 .post-lists.layout-grid .post-item .post-content {
   flex: 1;
@@ -2644,15 +2658,25 @@ a:hover {
   animation: fade-up 0.6s 0.3s backwards;
 }
 .type-bar .all-type {
-  width: 100%;
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   flex-direction: row;
   align-items: center;
   margin-right: 12px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.type-bar .all-type::-webkit-scrollbar {
+  display: none;
+}
+.type-bar .all-type {
   mask: linear-gradient(90deg, #fff 0, #fff 90%, hsla(0, 0%, 100%, 0.6) 95%, hsla(0, 0%, 100%, 0) 100%);
 }
 .type-bar .all-type .type-item {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   padding: 0.1rem 0.5rem;
@@ -2660,7 +2684,9 @@ a:hover {
   font-weight: bold;
   border-radius: 8px;
   white-space: nowrap;
-  height: 30px;
+  min-height: 1.875rem;
+  height: auto;
+  line-height: 1.5;
   cursor: pointer;
 }
 .type-bar .all-type .type-item .num {
@@ -2687,6 +2713,7 @@ a:hover {
   background-color: var(--main-color);
 }
 .type-bar .more-type {
+  flex: 0 0 auto;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -3491,13 +3518,19 @@ a:hover {
   right: 20px;
   bottom: 20px;
   opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
   z-index: 100;
   width: 300px;
   transform: translateY(180px);
+  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0.35s;
 }
 .next-post.show {
   opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
   transform: translateY(0);
+  transition-delay: 0s;
 }
 .next-post:hover {
   background-color: var(--main-color);
@@ -4240,8 +4273,10 @@ a:hover {
 .set-list .set-item .set-options {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
-  height: 40px;
+  min-height: 2.75rem;
+  height: auto;
   border-radius: 8px;
 }
 .set-list .set-item .set-options .options {
@@ -4252,6 +4287,7 @@ a:hover {
   border-radius: 8px;
   margin: 4px 8px;
   padding: 6px 8px;
+  line-height: 1.4;
   min-width: 30px;
   background-color: var(--main-card-border);
   transition: color 0.3s, background-color 0.3s;
@@ -4274,7 +4310,8 @@ a:hover {
   color: var(--main-font-color);
   font-family: var(--main-font-family);
   background-color: var(--main-border-shadow);
-  height: 100%;
+  min-height: 2.5rem;
+  height: auto;
   padding: 0 1rem;
   font-size: 14px;
 }
@@ -6211,29 +6248,43 @@ button.s-card,
   z-index: 1;
 }
 
+.home:not(.archive-page) .type-bar {
+  position: sticky;
+  top: var(--home-type-bar-top);
+  z-index: 1001;
+  isolation: isolate;
+  background-color: var(--main-card-background);
+}
+
+:root {
+  --home-type-bar-top: calc(60px + 1rem);
+  --home-type-bar-cover-bottom: var(--home-type-bar-top);
+  --home-type-bar-gap-left: 0px;
+  --home-type-bar-gap-right: 100vw;
+}
+
+.home-type-bar-marker {
+  display: block;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
+.background.home-type-bar-gap {
+  z-index: 999;
+  pointer-events: none;
+  clip-path: polygon(var(--home-type-bar-gap-left) 60px, var(--home-type-bar-gap-right) 60px, var(--home-type-bar-gap-right) var(--home-type-bar-cover-bottom), var(--home-type-bar-gap-left) var(--home-type-bar-cover-bottom));
+  -webkit-clip-path: polygon(var(--home-type-bar-gap-left) 60px, var(--home-type-bar-gap-right) 60px, var(--home-type-bar-gap-right) var(--home-type-bar-cover-bottom), var(--home-type-bar-gap-left) var(--home-type-bar-cover-bottom));
+  background-color: var(--main-site-background);
+}
+
 .home:not(.archive-page) .type-bar .type-item.choose {
   color: var(--main-card-background);
-  background: transparent;
+  background: var(--main-color);
   box-shadow: none;
   animation: none;
-}
-
-.home:not(.archive-page) .type-bar .all-type {
-  position: relative;
-}
-
-.home:not(.archive-page) .category-choice-indicator {
-  position: absolute;
-  z-index: 0;
-  top: 0;
-  left: 0;
-  width: 0;
-  height: 30px;
-  border-radius: 8px;
-  background-color: var(--main-color);
-  box-shadow: 0 6px 14px -8px var(--main-color);
-  pointer-events: auto;
-  transition: width 0.32s cubic-bezier(0.22, 1, 0.36, 1), transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.28s ease;
 }
 
 .posts-content {
@@ -6534,7 +6585,8 @@ button.s-card,
 .search.modal .search-form input {
   display: block;
   width: 100%;
-  height: 40px;
+  min-height: 2.5rem;
+  height: auto;
   padding: 0.6rem 1rem;
   border: 1px solid var(--main-card-border);
   border-radius: 8px;
@@ -6542,6 +6594,7 @@ button.s-card,
   color: var(--main-font-color);
   background: var(--main-card-second-background);
   font: inherit;
+  line-height: 1.4;
   transition: border-color 0.3s, box-shadow 0.3s;
 }
 

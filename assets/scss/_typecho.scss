@@ -455,27 +455,39 @@ button.s-card,
   position: relative;
   z-index: 1;
 }
+.home:not(.archive-page) .type-bar {
+  position: sticky;
+  top: var(--home-type-bar-top);
+  z-index: 1001;
+  isolation: isolate;
+  background-color: var(--main-card-background);
+}
+:root {
+  --home-type-bar-top: calc(60px + 1rem);
+  --home-type-bar-cover-bottom: var(--home-type-bar-top);
+  --home-type-bar-gap-left: 0px;
+  --home-type-bar-gap-right: 100vw;
+}
+.home-type-bar-marker {
+  display: block;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+.background.home-type-bar-gap {
+  z-index: 999;
+  pointer-events: none;
+  clip-path: polygon(var(--home-type-bar-gap-left) 60px, var(--home-type-bar-gap-right) 60px, var(--home-type-bar-gap-right) var(--home-type-bar-cover-bottom), var(--home-type-bar-gap-left) var(--home-type-bar-cover-bottom));
+  -webkit-clip-path: polygon(var(--home-type-bar-gap-left) 60px, var(--home-type-bar-gap-right) 60px, var(--home-type-bar-gap-right) var(--home-type-bar-cover-bottom), var(--home-type-bar-gap-left) var(--home-type-bar-cover-bottom));
+  background-color: var(--main-site-background);
+}
 .home:not(.archive-page) .type-bar .type-item.choose {
   color: var(--main-card-background);
-  background: transparent;
+  background: var(--main-color);
   box-shadow: none;
   animation: none;
-}
-.home:not(.archive-page) .type-bar .all-type {
-  position: relative;
-}
-.home:not(.archive-page) .category-choice-indicator {
-  position: absolute;
-  z-index: 0;
-  top: 0;
-  left: 0;
-  width: 0;
-  height: 30px;
-  border-radius: 8px;
-  background-color: var(--main-color);
-  box-shadow: 0 6px 14px -8px var(--main-color);
-  pointer-events: auto;
-  transition: width .32s cubic-bezier(.22, 1, .36, 1), transform .42s cubic-bezier(.22, 1, .36, 1), background-color .28s ease;
 }
 .posts-content { position: relative; }
 .post-list-stage { position: relative; }
@@ -552,7 +564,8 @@ button.s-card,
 .search.modal .search-form input {
   display: block;
   width: 100%;
-  height: 40px;
+  min-height: 2.5rem;
+  height: auto;
   padding: .6rem 1rem;
   border: 1px solid var(--main-card-border);
   border-radius: 8px;
@@ -560,6 +573,7 @@ button.s-card,
   color: var(--main-font-color);
   background: var(--main-card-second-background);
   font: inherit;
+  line-height: 1.4;
   transition: border-color .3s, box-shadow .3s;
 }
 .search.modal .search-form input:focus { border-color: var(--main-color); box-shadow: 0 8px 16px -4px var(--main-color-bg); }
