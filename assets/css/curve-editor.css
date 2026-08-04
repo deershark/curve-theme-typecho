@@ -1,0 +1,248 @@
+.curve-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border: 1px solid #d9dee5;
+  border-radius: 4px;
+  background: #f6f8fa;
+  color: #59636e;
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.curve-editor-toolbar__label {
+  margin-right: 2px;
+  color: #39424e;
+  font-weight: 600;
+}
+
+.curve-editor-toolbar__group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+  padding-right: 6px;
+  border-right: 1px solid #d9dee5;
+}
+
+.curve-editor-toolbar__group:last-child {
+  padding-right: 0;
+  border-right: 0;
+}
+
+.curve-editor-toolbar button.curve-editor-toolbar__button {
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid #c8d0d9;
+  border-radius: 3px;
+  background: #fff;
+  color: #39424e;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.2;
+}
+
+.curve-editor-toolbar button.curve-editor-toolbar__button:hover,
+.curve-editor-toolbar button.curve-editor-toolbar__button:focus {
+  border-color: #425aef;
+  color: #425aef;
+  outline: 0;
+}
+
+.curve-editor-toolbar__hint {
+  flex-basis: 100%;
+  color: #7b8490;
+  font-size: 12px;
+}
+
+/* 文章自定义字段 */
+#custom-field {
+  --curve-custom-field-label-width: 190px;
+  box-sizing: border-box;
+  margin: 14px 0 !important;
+  padding: 13px 16px !important;
+  border: 1px solid #e2e6eb;
+  border-radius: 6px;
+  background: #fff;
+}
+
+#custom-field > summary {
+  color: #303943;
+  font-size: 14px;
+  line-height: 24px;
+}
+
+#custom-field > summary:hover {
+  color: #425aef;
+}
+
+#custom-field .fields {
+  margin: 12px 0 0 !important;
+  padding: 0 !important;
+}
+
+#custom-field .fields .field {
+  display: grid !important;
+  grid-template-columns: var(--curve-custom-field-label-width) minmax(0, 1fr);
+  column-gap: 20px;
+  align-items: start;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin: 0 !important;
+  padding: 14px 0 !important;
+  border-top: 1px solid #edf0f3;
+}
+
+#custom-field .fields .field:last-child {
+  padding-bottom: 2px !important;
+  border-bottom: 0;
+}
+
+#custom-field .fields .field-name {
+  display: flex !important;
+  flex: 0 0 var(--curve-custom-field-label-width) !important;
+  align-items: flex-start;
+  box-sizing: border-box;
+  width: auto !important;
+  min-width: 0;
+  margin: 0 !important;
+}
+
+#custom-field .fields .field-name > .typecho-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 5px 0 0 !important;
+  color: #39424e;
+  font-size: 13px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+#custom-field .fields .field-name > .typecho-label a {
+  color: inherit;
+}
+
+#custom-field .fields .field-name > input[name="fieldNames[]"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto !important;
+  margin: 0 8px 0 0 !important;
+}
+
+#custom-field .fields .field-name > select[name="fieldTypes[]"] {
+  flex: 0 0 76px;
+  width: 76px;
+  max-width: 76px;
+}
+
+#custom-field .fields .field-value {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 10px;
+  align-items: start;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin: 0 !important;
+}
+
+#custom-field .fields .field-value > div {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+#custom-field .fields .field-value > input:not([type="radio"]):not([type="checkbox"]),
+#custom-field .fields .field-value > textarea,
+#custom-field .fields .field-value > select,
+#custom-field .fields .field-value > p:not(.description) {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+}
+
+#custom-field .fields .field-value input:not([type="radio"]):not([type="checkbox"]),
+#custom-field .fields .field-value textarea,
+#custom-field .fields .field-value select {
+  box-sizing: border-box;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0;
+}
+
+#custom-field .fields .field-value > textarea {
+  min-height: 74px;
+  resize: vertical;
+}
+
+#custom-field .fields .field-value > .description,
+#custom-field .fields .field-value > .message {
+  grid-column: 1 / -1;
+  margin: 0 !important;
+  color: #7b8490;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+#custom-field .fields .field-value > .btn {
+  align-self: start;
+  white-space: nowrap;
+}
+
+#custom-field .fields .field-value .multiline {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  margin: 0 14px 0 0;
+}
+
+#custom-field .add {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 12px !important;
+  padding-top: 12px;
+  border-top: 1px solid #edf0f3;
+}
+
+#custom-field .add .description {
+  margin: 0 !important;
+  color: #7b8490;
+  font-size: 12px;
+  line-height: 18px;
+  text-align: right;
+}
+
+@media (max-width: 700px) {
+  #custom-field {
+    padding: 12px !important;
+  }
+
+  #custom-field .fields .field {
+    grid-template-columns: 1fr;
+    row-gap: 8px;
+  }
+
+  #custom-field .fields .field-name {
+    width: 100% !important;
+  }
+
+  #custom-field .fields .field-value {
+    width: 100%;
+  }
+
+  #custom-field .add {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  #custom-field .add .description {
+    text-align: left;
+  }
+}

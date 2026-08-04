@@ -950,7 +950,7 @@
       }
     }
   }
-  .post-meta {
+  > .post-meta {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -1386,6 +1386,34 @@
           }
         }
       }
+      &.sitemap-friends {
+        .title.friends {
+          gap: 4px;
+          cursor: default;
+          .friends-refresh {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            border: 0;
+            border-radius: 50%;
+            color: var(--main-font-second-color);
+            background: transparent;
+            cursor: pointer;
+            transition: color 0.3s, background-color 0.3s, transform 0.3s;
+            .iconfont {
+              margin-left: 0;
+            }
+            &:hover {
+              color: var(--main-color);
+              background-color: var(--main-color-bg);
+              transform: rotate(180deg);
+            }
+          }
+        }
+      }
     }
   }
 }
@@ -1562,6 +1590,7 @@
     cursor: pointer;
     overflow: hidden;
     min-height: 12.5rem;
+    height: auto;
     
     .post-cover {
       flex: 0 0 35%;
@@ -1582,7 +1611,6 @@
 
     .post-content {
       flex: 1;
-      min-width: 0;
       padding: 1.6rem 2rem;
       display: flex;
       flex-direction: column;
@@ -1617,11 +1645,10 @@
         font-size: 1.25rem;
         line-height: 1.5;
         font-weight: bold;
-        margin: 0.6rem 0;
+        margin: 0.8rem 0;
         transition: color 0.3s;
         display: -webkit-box;
         overflow: hidden;
-        overflow-wrap: anywhere;
         word-break: break-all;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
@@ -1638,26 +1665,17 @@
         -webkit-line-clamp: 2;
       }
       .post-meta {
-        min-width: 0;
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
         color: var(--main-font-second-color);
         .post-tags {
-          min-width: 0;
           display: flex;
           flex-wrap: wrap;
           opacity: 0.8;
           margin-right: 20px;
           overflow: hidden;
-          mask: linear-gradient(
-            90deg,
-            #fff 0,
-            #fff 90%,
-            hsla(0, 0%, 100%, 0.6) 95%,
-            hsla(0, 0%, 100%, 0) 100%
-          );
           .tags-name {
             display: flex;
             flex-direction: row;
@@ -1683,8 +1701,8 @@
           }
         }
         .post-time {
-          flex-shrink: 0;
           opacity: 0.6;
+          flex-shrink: 0;
           font-size: 0.8125rem;
           white-space: nowrap;
         }
@@ -1716,6 +1734,7 @@
     @media (max-width: 768px) {
       flex-direction: column;
       min-height: 0;
+      height: auto;
       
       .post-cover {
         flex: none;
@@ -1764,6 +1783,7 @@
     .post-item {
       margin: 0;
       flex-direction: column;
+      min-height: 0;
       height: auto;
 
       .post-cover {
@@ -3829,6 +3849,7 @@
         animation: gradientFlow 6s ease infinite;
         .title2 {
           line-height: 2;
+          margin-right: 0;
         }
       }
       &.pursuit {
@@ -4452,7 +4473,7 @@
   display: flex;
   flex-direction: column;
   animation: fade-up 0.6s 0.1s backwards;
-  .post-meta {
+  > .post-meta {
     padding: 2rem 0 3rem 18px;
     width: 100%;
     .meta {
@@ -4529,6 +4550,7 @@
         font-size: 14px;
         border-radius: 8px;
         opacity: 0.8;
+        white-space: nowrap;
         .iconfont {
           margin-right: 6px;
           transition: color 0.3s;
@@ -4557,7 +4579,7 @@
       }
     }
   }
-  .post-content {
+  > .post-content {
     width: 100%;
     display: flex;
     flex-direction: row;
@@ -4651,7 +4673,7 @@
     }
   }
   @media (max-width: 768px) {
-    .post-meta {
+    > .post-meta {
       padding: 4rem 1.5rem;
       .meta {
         justify-content: center;
@@ -4669,9 +4691,10 @@
       }
       .other-meta {
         justify-content: center;
+        flex-wrap: wrap;
       }
     }
-    .post-content {
+    > .post-content {
       .post-article {
         border: none;
         padding: 20px 30px;

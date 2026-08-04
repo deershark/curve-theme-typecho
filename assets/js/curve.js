@@ -284,6 +284,54 @@
     var posts = document.querySelectorAll("[data-post-link]");
     if (posts.length) window.location.href = posts[Math.floor(Math.random() * posts.length)].dataset.postLink;
   });
+
+  var footerFriendRoots = document.querySelectorAll("[data-footer-friends]");
+  Array.prototype.forEach.call(footerFriendRoots, function (root) {
+    var list = root.querySelector("[data-footer-friend-list]");
+    var refresh = root.querySelector("[data-footer-friends-refresh]");
+    var friends = [];
+    try {
+      friends = JSON.parse(root.getAttribute("data-friends") || "[]");
+    } catch (error) {
+      friends = [];
+    }
+    if (!list || !friends.length) return;
+
+    var count = parseInt(root.getAttribute("data-friend-count") || "3", 10);
+    count = Math.max(1, Math.min(count, friends.length));
+
+    function randomFriends() {
+      var shuffled = friends.slice();
+      for (var index = shuffled.length - 1; index > 0; index--) {
+        var swapIndex = Math.floor(Math.random() * (index + 1));
+        var item = shuffled[index];
+        shuffled[index] = shuffled[swapIndex];
+        shuffled[swapIndex] = item;
+      }
+      return shuffled.slice(0, count);
+    }
+
+    function renderFriends(selected) {
+      list.textContent = "";
+      selected.forEach(function (friend) {
+        var link = document.createElement("a");
+        link.className = "link-text";
+        link.href = friend.url || "#";
+        link.target = "_blank";
+        link.rel = "noopener";
+        link.title = friend.desc || friend.name || "友情链接";
+        link.textContent = friend.name || "未命名站点";
+        list.appendChild(link);
+      });
+    }
+
+    renderFriends(randomFriends());
+    if (refresh) refresh.addEventListener("click", function () {
+      renderFriends(randomFriends());
+      refresh.blur();
+    });
+  });
+
   function samePath(a, b) {
     try {
       var left = new URL(a, window.location.href);
@@ -312,7 +360,7 @@
     });
   }
 
-  function scrollHomePaginationToStart(home, list) {
+  function scrollHomeListToStart(home, list) {
     if (!home || !list) return;
     var stage = list.closest(".post-list-stage") || list;
     var typeBar = home.querySelector(".type-bar");
@@ -334,7 +382,6 @@
     var list = home.querySelector(".post-lists");
     var pagination = home.querySelector(".pagination");
     var localLoading = home.querySelector("[data-category-loading]");
-    var isPagination = !!(clickedLink && clickedLink.closest && clickedLink.closest(".pagination"));
     if (!list) return;
     var filterRoot = home.dataset.categoryFilter;
     if (!filterRoot) {
@@ -367,8 +414,7 @@
         setHomeFilterChoice(home, filterRoot);
         home.dataset.categoryFilter = filterRoot;
         if (clickedLink) clickedLink.blur();
-        if (isPagination) scrollHomePaginationToStart(home, renderedList);
-        else window.scrollTo({ top: Math.max(0, home.querySelector(".type-bar").getBoundingClientRect().top + window.scrollY - 80), behavior: "smooth" });
+        scrollHomeListToStart(home, renderedList);
       })
       .catch(function () {
         message("分类文章加载失败，请稍后重试");
@@ -749,6 +795,48 @@
       var copy = function () { message("代码已复制"); button.classList.add("copied"); window.setTimeout(function () { button.classList.remove("copied"); }, 1400); };
       if (navigator.clipboard) navigator.clipboard.writeText(code.textContent).then(copy).catch(function () {});
     });
+  });
+
+  /* Curve's original vitepress-plugin-tabs rendered Vue buttons. Typecho
+   * keeps the same class names, so only the small selection controller is
+   * needed here. Shared keys synchronize tabs in separate tab groups. */
+  var curveTabGroups = Array.prototype.slice.call(document.querySelectorAll("[data-curve-tabs]"));
+  curveTabGroups.forEach(function (group) {
+    var buttons = Array.prototype.slice.call(group.querySelectorAll("[data-curve-tab]"));
+    var panels = Array.prototype.slice.call(group.querySelectorAll("[data-curve-tab-panel]"));
+    if (!buttons.length || !panels.length) return;
+    var selectTab = function (index, saveState) {
+      index = Math.max(0, Math.min(index, buttons.length - 1));
+      buttons.forEach(function (button, buttonIndex) {
+        button.setAttribute("aria-selected", buttonIndex === index ? "true" : "false");
+      });
+      panels.forEach(function (panel, panelIndex) {
+        panel.hidden = panelIndex !== index;
+      });
+      if (saveState) {
+        var sharedKey = group.dataset.curveTabsKey;
+        if (sharedKey) {
+          curveTabGroups.forEach(function (otherGroup) {
+            if (otherGroup !== group && otherGroup.dataset.curveTabsKey === sharedKey) {
+              var otherButtons = otherGroup.querySelectorAll("[data-curve-tab]");
+              if (otherButtons.length > index && otherGroup._curveSelectTab) otherGroup._curveSelectTab(index, false);
+            }
+          });
+        }
+      }
+    };
+    group._curveSelectTab = selectTab;
+    buttons.forEach(function (button, index) {
+      button.addEventListener("click", function () { selectTab(index, true); });
+      button.addEventListener("keydown", function (event) {
+        if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+        event.preventDefault();
+        var nextIndex = event.key === "ArrowRight" ? (index + 1) % buttons.length : (index - 1 + buttons.length) % buttons.length;
+        buttons[nextIndex].focus();
+        selectTab(nextIndex, true);
+      });
+    });
+    selectTab(buttons.findIndex(function (button) { return button.getAttribute("aria-selected") === "true"; }), false);
   });
 
   /* Submit Typecho comments in place. The endpoint still handles validation,

@@ -15,6 +15,29 @@ function curve_option($options, $name, $default = '')
     return $value === '' ? $default : $value;
 }
 
+/** 解码主题设置中的 JSON 数组。 */
+function curve_json_decode($value, $default = array())
+{
+    if (is_array($value)) {
+        return $value;
+    }
+
+    $decoded = json_decode((string) $value, true);
+    return is_array($decoded) ? $decoded : $default;
+}
+
+/** 编码主题设置中的 JSON，保证中文和 URL 可读。 */
+function curve_json_encode($value)
+{
+    return json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+}
+
+function curve_json_option($options, $name, $default = array())
+{
+    $value = isset($options->{$name}) ? $options->{$name} : '';
+    return curve_json_decode($value, $default);
+}
+
 function curve_accent_color($options)
 {
     $value = isset($options->accentColor) ? trim((string) $options->accentColor) : '';
@@ -81,14 +104,294 @@ function curve_lines($value)
     return array_values(array_filter(array_map('trim', $rows), 'strlen'));
 }
 
+/** 仅允许作为 About 图片使用的 HTTP(S) 或站内绝对路径。 */
+function curve_about_asset_url($value, $default = '')
+{
+    $value = trim((string) $value);
+    if ($value === '' || preg_match('/[\s\'"()<>]/u', $value)) {
+        return $default;
+    }
+    if (preg_match('/^https?:\/\//i', $value) || strpos($value, '/') === 0) {
+        return $value;
+    }
+    return $default;
+}
+
+/** 解析 page-about.php 使用的 curve-about 特殊 Markdown 块。 */
+function curve_about_parse_markdown($content)
+{
+    $data = array(
+        'intro' => array('greeting' => '', 'name' => '', 'description' => ''),
+        'pursuit' => array(),
+        'skills' => array(),
+        'career' => array('title' => '', 'image' => '', 'items' => array()),
+        'personality' => array('name' => '', 'type' => '', 'image' => '', 'url' => ''),
+        'motto' => array(),
+        'interest' => array('title' => '', 'description' => '', 'image' => '', 'color' => '#0c0e20'),
+        'music' => array('title' => '', 'description' => '', 'image' => '', 'color' => '#7b3c25'),
+        'stats' => array('enabled' => '1', 'image' => ''),
+        'info' => array('location' => '', 'locationImage' => '', 'birthYear' => '', 'occupation' => ''),
+        'story' => array('title' => '', 'paragraphs' => array()),
+    );
+    $sectionMap = array(
+        '介绍' => 'intro', '个人介绍' => 'intro',
+        '追求' => 'pursuit',
+        '技能' => 'skills',
+        '生涯' => 'career',
+        '性格' => 'personality',
+        '座右铭' => 'motto',
+        '关注偏好' => 'interest',
+        '音乐偏好' => 'music',
+        '数据' => 'stats', '站点数据' => 'stats',
+        '信息' => 'info', '个人信息' => 'info',
+        '心路历程' => 'story',
+    );
+    $sectionLabels = array(
+        'intro' => '介绍', 'pursuit' => '追求', 'skills' => '技能', 'career' => '生涯',
+        'personality' => '性格', 'motto' => '座右铭', 'interest' => '关注偏好', 'music' => '音乐偏好',
+        'stats' => '数据', 'info' => '信息', 'story' => '心路历程',
+    );
+    $propertyMap = array(
+        'intro' => array('问候语' => 'greeting', '名称' => 'name', '简介' => 'description'),
+        'career' => array('标题' => 'title', '图片' => 'image'),
+        'personality' => array('名称' => 'name', '类型' => 'type', '图片' => 'image', '链接' => 'url'),
+        'interest' => array('标题' => 'title', '说明' => 'description', '图片' => 'image', '颜色' => 'color'),
+        'music' => array('标题' => 'title', '说明' => 'description', '图片' => 'image', '颜色' => 'color'),
+        'stats' => array('开启' => 'enabled', '图片' => 'image'),
+        'info' => array('所在地' => 'location', '所在地图片' => 'locationImage', '出生年份' => 'birthYear', '当前职业' => 'occupation'),
+        'story' => array('标题' => 'title', '段落' => 'paragraphs'),
+    );
+    $current = '';
+    $invalid = false;
+    $errors = array();
+    $sections = array();
+    $addError = function ($lineNumber, $message) use (&$errors) {
+        $prefix = $lineNumber > 0 ? '第' . $lineNumber . '行：' : '';
+        $errors[] = $prefix . $message;
+    };
+    $lines = preg_split('/\r\n|\r|\n/', (string) $content);
+    foreach ($lines as $lineIndex => $line) {
+        $lineNumber = $lineIndex + 1;
+        $line = trim($line);
+        if ($line === '') {
+            continue;
+        }
+        if (preg_match('/^(#{1,6})\s+(.+?)\s*#*$/u', $line, $match)) {
+            $heading = trim($match[2]);
+            $heading = preg_replace('/\s+/u', '', $heading);
+            if (strlen($match[1]) === 1 && !isset($sectionMap[$heading])) {
+                continue;
+            }
+            if (!isset($sectionMap[$heading])) {
+                $current = '';
+                $invalid = true;
+                $addError($lineNumber, '无法识别的区块“' . $heading . '”，请使用教程中的区块名称。');
+                continue;
+            }
+            $current = $sectionMap[$heading];
+            $sections[$current] = true;
+            continue;
+        }
+        if ($current === '') {
+            $invalid = true;
+            $addError($lineNumber, '内容不属于任何有效区块，请检查上方的 ## 区块标题。');
+            continue;
+        }
+        $isList = preg_match('/^[-*+]\s+(.+)$/u', $line, $listMatch);
+        $valueLine = $isList ? trim($listMatch[1]) : $line;
+        if (in_array($current, array('pursuit', 'motto'), true)) {
+            if (!$isList || $valueLine === '') {
+                $invalid = true;
+                $addError($lineNumber, '“' . ($current === 'pursuit' ? '追求' : '座右铭') . '”区块需要使用“- 内容”格式。');
+                continue;
+            }
+            $data[$current][] = $valueLine;
+            continue;
+        }
+        if ($current === 'skills') {
+            if (!$isList) {
+                $invalid = true;
+                $addError($lineNumber, '技能需要使用“- 名称 | 颜色 | 图标名 | 链接”格式。');
+                continue;
+            }
+            $parts = array_map('trim', explode('|', $valueLine, 4));
+            if (count($parts) < 4 || $parts[0] === '' || !preg_match('/^#[0-9a-f]{3,6}$/i', $parts[1]) || !preg_match('/^[a-z0-9_-]+$/i', $parts[2]) || !preg_match('/^https?:\/\//i', $parts[3])) {
+                $invalid = true;
+                $addError($lineNumber, '技能格式无效，颜色应为十六进制值，图标名只能包含字母、数字、下划线或短横线，链接必须是 HTTP(S)。');
+                continue;
+            }
+            $data['skills'][] = array('name' => $parts[0], 'color' => strtolower($parts[1]), 'icon' => $parts[2], 'url' => $parts[3]);
+            continue;
+        }
+        if ($current === 'career') {
+            if (!$isList) {
+                $parts = array_map('trim', explode('|', $valueLine, 2));
+                if (count($parts) === 2 && isset($propertyMap['career'][$parts[0]])) {
+                    $data['career'][$propertyMap['career'][$parts[0]]] = $parts[1];
+                    continue;
+                }
+                $invalid = true;
+                $addError($lineNumber, '生涯属性只能使用“标题 | 内容”或“图片 | 图片地址”。');
+                continue;
+            }
+            $parts = array_map('trim', explode('|', $valueLine, 2));
+            if (count($parts) < 2 || $parts[0] === '' || !preg_match('/^#[0-9a-f]{3,6}$/i', $parts[1])) {
+                $invalid = true;
+                $addError($lineNumber, '生涯经历需要使用“- 内容 | 颜色”格式。');
+                continue;
+            }
+            $data['career']['items'][] = array('text' => $parts[0], 'color' => strtolower($parts[1]));
+            continue;
+        }
+        if ($current === 'story' && $isList && strpos($valueLine, '|') === false) {
+            $data['story']['paragraphs'][] = $valueLine;
+            continue;
+        }
+        $parts = array_map('trim', explode('|', $valueLine, 2));
+        if (count($parts) < 2) {
+            $invalid = true;
+            $addError($lineNumber, '请使用“字段 | 内容”格式。');
+            continue;
+        }
+        $key = preg_replace('/\s+/u', '', $parts[0]);
+        $value = $parts[1];
+        if ($current === 'story' && $key === '段落') {
+            if ($value === '') {
+                $invalid = true;
+                $addError($lineNumber, '心路历程的段落内容不能为空。');
+            } else {
+                $data['story']['paragraphs'][] = $value;
+            }
+            continue;
+        }
+        if (!isset($propertyMap[$current][$key])) {
+            $invalid = true;
+            $addError($lineNumber, '“' . $sectionLabels[$current] . '”区块不支持字段“' . $key . '”。');
+            continue;
+        }
+        $property = $propertyMap[$current][$key];
+        $data[$current][$property] = $value;
+    }
+
+    if (trim((string) $content) === '') {
+        return array('valid' => false, 'data' => $data, 'sections' => $sections, 'errors' => array('curve-about 配置块为空。'));
+    }
+
+    $required = array(
+        array('intro', '介绍', !empty($data['intro']['greeting']) && !empty($data['intro']['name']) && !empty($data['intro']['description']), '介绍区块需要填写“问候语、名称、简介”。'),
+        array('pursuit', '追求', count($data['pursuit']) > 0, '追求区块至少需要一条列表项。'),
+        array('skills', '技能', count($data['skills']) > 0, '技能区块至少需要一条有效技能。'),
+        array('career', '生涯', !empty($data['career']['title']) && curve_about_asset_url($data['career']['image']) !== '' && count($data['career']['items']) > 0, '生涯区块需要填写标题、图片和至少一条经历。'),
+        array('personality', '性格', !empty($data['personality']['name']) && !empty($data['personality']['type']) && curve_about_asset_url($data['personality']['image']) !== '' && preg_match('/^https?:\/\//i', $data['personality']['url']), '性格区块需要填写名称、类型、图片和详情链接。'),
+        array('motto', '座右铭', count($data['motto']) > 0, '座右铭区块至少需要一条列表项。'),
+        array('interest', '关注偏好', !empty($data['interest']['title']) && !empty($data['interest']['description']) && curve_about_asset_url($data['interest']['image']) !== '' && preg_match('/^#[0-9a-f]{3,6}$/i', $data['interest']['color']), '关注偏好区块需要填写标题、说明、图片和有效颜色。'),
+        array('music', '音乐偏好', !empty($data['music']['title']) && !empty($data['music']['description']) && curve_about_asset_url($data['music']['image']) !== '' && preg_match('/^#[0-9a-f]{3,6}$/i', $data['music']['color']), '音乐偏好区块需要填写标题、说明、图片和有效颜色。'),
+        array('stats', '数据', in_array($data['stats']['enabled'], array('0', '1'), true) && ($data['stats']['enabled'] === '0' || (!empty($data['stats']['image']) && curve_about_asset_url($data['stats']['image']) !== '')), '数据区块需要填写“开启 | 0/1”；开启时还需要图片。'),
+        array('info', '信息', !empty($data['info']['location']) && curve_about_asset_url($data['info']['locationImage']) !== '' && !empty($data['info']['birthYear']) && !empty($data['info']['occupation']), '信息区块需要填写所在地、所在地图片、出生年份和当前职业。'),
+        array('story', '心路历程', !empty($data['story']['title']) && count($data['story']['paragraphs']) > 0, '心路历程区块需要填写标题和至少一段内容。'),
+    );
+    foreach ($required as $requirement) {
+        if (isset($sections[$requirement[0]]) && !$requirement[2]) {
+            $invalid = true;
+            $addError(0, $requirement[3]);
+        }
+    }
+    if (empty($sections)) {
+        $invalid = true;
+        $addError(0, '配置块中没有可用区块，请至少填写一个教程中的 ## 区块。');
+    }
+    return array('valid' => !$invalid, 'data' => array_merge($data, array('sections' => $sections)), 'sections' => $sections, 'errors' => array_values(array_unique($errors)));
+}
+
 function curve_link_rows($value)
 {
     $items = array();
-    foreach (curve_lines($value) as $row) {
-        $parts = array_map('trim', explode('|', $row, 2));
-        if (count($parts) === 2 && $parts[0] !== '' && filter_var($parts[1], FILTER_VALIDATE_URL)) {
-            $items[] = array('name' => $parts[0], 'url' => $parts[1]);
+    $rows = curve_json_decode($value, null);
+    if ($rows === null) {
+        $rows = array();
+        foreach (curve_lines($value) as $row) {
+            $parts = array_map('trim', explode('|', $row, 2));
+            if (count($parts) === 2) {
+                $rows[] = array('name' => $parts[0], 'url' => $parts[1]);
+            }
         }
+    }
+
+    foreach ($rows as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $name = isset($row['name']) ? trim((string) $row['name']) : '';
+        $url = isset($row['url']) ? trim((string) $row['url']) : '';
+        if ($name !== '' && filter_var($url, FILTER_VALIDATE_URL)) {
+            $items[] = array(
+                'name' => $name,
+                'url' => $url,
+                'icon' => isset($row['icon']) ? trim((string) $row['icon']) : '',
+            );
+        }
+    }
+    return $items;
+}
+
+/** 解析左上角悬浮菜单 JSON。 */
+function curve_top_left_menu_rows($value)
+{
+    $items = array();
+    $rows = array();
+    foreach (curve_json_decode($value) as $category) {
+        if (!is_array($category)) {
+            continue;
+        }
+        if (isset($category['items']) && is_array($category['items'])) {
+            $group = isset($category['name']) ? trim((string) $category['name']) : (isset($category['group']) ? trim((string) $category['group']) : '');
+            foreach ($category['items'] as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                $rows[] = array(
+                    'group' => $group,
+                    'name' => isset($item['name']) ? $item['name'] : '',
+                    'url' => isset($item['url']) ? $item['url'] : '',
+                    'icon' => isset($item['icon']) ? $item['icon'] : '',
+                );
+            }
+            continue;
+        }
+        $rows[] = $category;
+    }
+
+    foreach ($rows as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+
+        $group = isset($row['group']) ? trim((string) $row['group']) : '';
+        $name = isset($row['name']) ? trim((string) $row['name']) : '';
+        $url = isset($row['url']) ? trim((string) $row['url']) : '';
+        if ($group === '' || $name === '' || !filter_var($url, FILTER_VALIDATE_URL)) {
+            continue;
+        }
+
+        $iconValue = isset($row['icon']) ? trim((string) $row['icon']) : '';
+        $iconUrl = '';
+        if (preg_match('/^https?:\/\//i', $iconValue) && filter_var($iconValue, FILTER_VALIDATE_URL)) {
+            $iconUrl = $iconValue;
+            $icon = '';
+        } else {
+            $icon = preg_replace('/^icon-/i', '', $iconValue);
+            if ($icon === '' || !preg_match('/^[a-z0-9_-]+$/i', $icon)) {
+                $icon = 'link';
+            }
+        }
+
+        $items[] = array(
+            'group' => $group,
+            'name' => $name,
+            'url' => $url,
+            'icon' => $icon,
+            'iconUrl' => $iconUrl,
+        );
     }
     return $items;
 }
@@ -97,7 +400,13 @@ function curve_link_rows($value)
 function curve_pick_social_links($socialLinks, $names, $limit = 2)
 {
     $socialLinks = array_values((array) $socialLinks);
-    $requestedNames = curve_lines($names);
+    $requestedNames = array();
+    foreach (curve_json_decode($names) as $name) {
+        $name = trim((string) $name);
+        if ($name !== '' && !in_array($name, $requestedNames, true)) {
+            $requestedNames[] = $name;
+        }
+    }
     $selected = array();
 
     foreach ($requestedNames as $requestedName) {
@@ -141,32 +450,6 @@ function curve_pick_social_links($socialLinks, $names, $limit = 2)
     return empty($requestedNames) || empty($selected) ? array_slice($socialLinks, 0, $limit) : $selected;
 }
 
-/** 解析页脚站点地图：栏目|名称|链接|新窗口(1/0)。 */
-function curve_footer_columns($value)
-{
-    $columns = array();
-    foreach (curve_lines($value) as $row) {
-        $parts = array_map('trim', explode('|', $row, 4));
-        if (count($parts) < 3 || $parts[0] === '' || $parts[1] === '' || $parts[2] === '') {
-            continue;
-        }
-        $url = $parts[2];
-        if (!preg_match('/^(?:https?:\/\/|\/|#|mailto:|tel:)/i', $url)) {
-            continue;
-        }
-        $title = $parts[0];
-        if (!isset($columns[$title])) {
-            $columns[$title] = array('title' => $title, 'links' => array());
-        }
-        $columns[$title]['links'][] = array(
-            'name' => $parts[1],
-            'url' => $url,
-            'newTab' => isset($parts[3]) && in_array(strtolower($parts[3]), array('1', 'true', 'yes'), true),
-        );
-    }
-    return array_values($columns);
-}
-
 function curve_social_icon($name)
 {
     $name = strtolower((string) $name);
@@ -178,6 +461,12 @@ function curve_social_icon($name)
     if (strpos($name, 'bilibili') !== false) return 'bilibili';
     if (strpos($name, 'home') !== false || strpos($name, '主页') !== false || strpos($name, '首页') !== false) return 'home';
     return 'link';
+}
+
+/** 社交链接图标只按固定平台名称匹配，不再支持自定义图标。 */
+function curve_social_icon_for_link($link)
+{
+    return curve_social_icon(is_array($link) && isset($link['name']) ? $link['name'] : '');
 }
 
 /** 解析独立页中的友情链接 Markdown 块。 */
@@ -252,9 +541,73 @@ function curve_render_friend_groups($groups)
     return $html . '</div>';
 }
 
+/** 读取友情链接页中的友链，并提供原 Curve 主题的默认推荐数据作为兜底。 */
+function curve_footer_friend_links()
+{
+    static $friends;
+    if ($friends !== null) {
+        return $friends;
+    }
+
+    $friends = array();
+    try {
+        $db = Typecho_Db::get();
+        $select = $db->select('text')
+            ->from('table.contents')
+            ->where('type = ?', 'page')
+            ->where('status = ?', 'publish')
+            ->where('template = ?', 'page-links.php')
+            ->limit(1);
+        $page = $db->fetchRow($select);
+        $source = is_array($page) && isset($page['text']) ? (string) $page['text'] : '';
+        if ($source !== '' && preg_match_all('/<!--\s*curve-friends\b(.*?)-->/is', $source, $blocks)) {
+            foreach ($blocks[1] as $block) {
+                foreach (curve_parse_friend_markdown($block) as $group) {
+                    foreach ($group['typeList'] as $friend) {
+                        $friends[] = $friend;
+                    }
+                }
+            }
+        }
+    } catch (Exception $exception) {
+        // 友链只影响页脚展示，读取失败时继续使用默认数据。
+    }
+
+    if (empty($friends)) {
+        $friends = array(
+            array('name' => '阮一峰', 'avatar' => 'https://pic.efefee.cn/uploads/2024/02/26/65dc5fb729cdb.webp', 'desc' => '阮老师，知名博主，大佬中的大佬', 'url' => 'https://www.ruanyifeng.com/blog/'),
+            array('name' => '张洪 Heo', 'avatar' => 'https://pic.efefee.cn/uploads/2024/02/26/65dc5304b211c.webp', 'desc' => '产品设计师，独立开发者，设计与科技分享', 'url' => 'https://blog.zhheo.com/'),
+            array('name' => '杜老师说', 'avatar' => 'https://pic.efefee.cn/uploads/2024/02/28/65de92770fb66.webp', 'desc' => '网络工程、网站技术与运维分享', 'url' => 'https://dusays.com/'),
+            array('name' => 'XAOXUU', 'avatar' => 'https://pic.efefee.cn/uploads/2024/02/29/65dfe0f7a945b.webp', 'desc' => 'Hexo Stellar、Volantis 主题作者', 'url' => 'https://xaoxuu.com/'),
+            array('name' => '风记星辰', 'avatar' => 'https://pic.efefee.cn/uploads/2024/02/29/65dfe827e319c.webp', 'desc' => '有着优秀设计与交互的博客', 'url' => 'https://www.thyuu.com/'),
+            array('name' => 'DIYgod', 'avatar' => 'https://pic.efefee.cn/uploads/2024/03/14/65f2c2bb8c17c.gif', 'desc' => '写代码是热爱，写到世界充满爱！', 'url' => 'https://diygod.cc/'),
+        );
+    }
+
+    $unique = array();
+    $validFriends = array();
+    foreach ($friends as $friend) {
+        $url = isset($friend['url']) ? trim((string) $friend['url']) : '';
+        if ($url === '' || !filter_var($url, FILTER_VALIDATE_URL) || isset($unique[$url])) {
+            continue;
+        }
+        $unique[$url] = true;
+        $validFriends[] = $friend;
+    }
+    $friends = $validFriends;
+    return $friends;
+}
+
 function curve_default_covers($options)
 {
-    return curve_lines(curve_option($options, 'defaultCovers'));
+    $covers = array();
+    foreach (curve_json_option($options, 'defaultCovers') as $cover) {
+        $cover = trim((string) $cover);
+        if ($cover !== '' && filter_var($cover, FILTER_VALIDATE_URL)) {
+            $covers[] = $cover;
+        }
+    }
+    return $covers;
 }
 
 function curve_post_cover($post, $options)
@@ -290,6 +643,252 @@ function curve_excerpt($post, $length = 130)
     return trim((string) preg_replace('/\s+/u', ' ', $excerpt));
 }
 
+/** 从递归 Markdown 渲染结果中取出正文，避免自定义容器层层套 markdown-body。 */
+function curve_markdown_inner_html($content)
+{
+    $content = trim((string) $content);
+    if (preg_match('/^<div class="markdown-body">(.*)<\/div>$/is', $content, $match)) {
+        return $match[1];
+    }
+    return $content;
+}
+
+/** 自定义标签允许使用站内绝对路径或 HTTP(S) 地址。 */
+function curve_markdown_safe_url($value)
+{
+    $value = trim(htmlspecialchars_decode((string) $value, ENT_QUOTES));
+    if ($value === '' || preg_match('/[\s"\'<>]/u', $value)) {
+        return '';
+    }
+    return preg_match('/^(?:https?:\/\/|\/)/i', $value) ? $value : '';
+}
+
+/** 渲染原 Curve 主题的 LinkCard 组件；不抓取远程站点，避免文章渲染被网络阻塞。 */
+function curve_markdown_render_link_card($attributes)
+{
+    $values = array();
+    if (preg_match_all('/([a-z][a-z0-9_-]*)\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s>]+))/i', (string) $attributes, $matches, PREG_SET_ORDER)) {
+        foreach ($matches as $match) {
+            $values[strtolower($match[1])] = isset($match[2]) && $match[2] !== '' ? $match[2] : (isset($match[3]) && $match[3] !== '' ? $match[3] : $match[4]);
+        }
+    }
+    $url = isset($values['url']) ? curve_markdown_safe_url($values['url']) : '';
+    if ($url === '') {
+        return '';
+    }
+    $title = isset($values['title']) ? trim(htmlspecialchars_decode($values['title'], ENT_QUOTES)) : '';
+    $description = isset($values['desc']) ? trim(htmlspecialchars_decode($values['desc'], ENT_QUOTES)) : '';
+    if ($description === '' && isset($values['description'])) {
+        $description = trim(htmlspecialchars_decode($values['description'], ENT_QUOTES));
+    }
+    $icon = isset($values['icon']) ? curve_markdown_safe_url($values['icon']) : '';
+    $external = preg_match('/^https?:\/\//i', $url) === 1;
+    $linkAttributes = ' href="' . curve_esc($url) . '" class="link-card s-card hover"';
+    if ($external) {
+        $linkAttributes .= ' target="_blank" rel="noopener"';
+    }
+    $html = '<a' . $linkAttributes . '>';
+    if ($external) {
+        $html .= '<span class="link-tip">引用站外地址，请注意甄别链接安全性</span>';
+    }
+    $html .= '<div class="link-data"><div class="link-icon">';
+    if ($icon !== '') {
+        $html .= '<img class="link-img" src="' . curve_esc($icon) . '" alt="link-img" loading="lazy">';
+    } else {
+        $html .= '<i class="iconfont icon-link"></i>';
+    }
+    $html .= '</div><div class="link-desc"><span class="link-title">' . curve_esc($title !== '' ? $title : '暂无标题') . '</span><span class="link-description">' . curve_esc($description !== '' ? $description : '暂无站点描述') . '</span></div><i class="link-go iconfont icon-up"></i></div></a>';
+    return $html;
+}
+
+/** 自定义提示块的类型映射，兼容 VitePress 和原主题的命名。 */
+function curve_markdown_block_type($type)
+{
+    $type = strtolower(trim((string) $type));
+    $types = array(
+        'note' => 'info', 'info' => 'info', 'question' => 'info', 'summary' => 'info',
+        'tip' => 'tip', 'hint' => 'tip',
+        'warning' => 'warning', 'important' => 'warning', 'caution' => 'warning',
+        'danger' => 'danger', 'error' => 'danger',
+    );
+    return isset($types[$type]) ? $types[$type] : '';
+}
+
+/** 渲染单个 Curve Markdown 容器。 */
+function curve_markdown_render_extension($type, $params, $body)
+{
+    $type = strtolower(trim((string) $type));
+    $params = trim((string) $params);
+    $bodyHtml = curve_markdown_inner_html(curve_render_markdown($body));
+    $admonitionType = curve_markdown_block_type($type);
+    if ($admonitionType !== '') {
+        $defaultTitles = array(
+            'info' => 'INFO', 'note' => 'NOTE', 'question' => 'QUESTION', 'summary' => 'SUMMARY',
+            'tip' => 'TIP', 'hint' => 'HINT', 'warning' => 'WARNING', 'important' => 'IMPORTANT',
+            'caution' => 'CAUTION', 'danger' => 'DANGER', 'error' => 'ERROR',
+        );
+        $title = $params !== '' ? $params : (isset($defaultTitles[$type]) ? $defaultTitles[$type] : strtoupper($admonitionType));
+        return '<div class="' . curve_esc($admonitionType) . ' custom-block"><p class="custom-block-title">' . curve_esc($title) . '</p>' . $bodyHtml . '</div>';
+    }
+    if ($type === 'details') {
+        $open = false;
+        if (preg_match('/^(?:open|opened)\b\s*/i', $params)) {
+            $open = true;
+            $params = trim((string) preg_replace('/^(?:open|opened)\b\s*/i', '', $params));
+        }
+        $title = $params !== '' ? $params : 'Details';
+        return '<details class="details custom-block"' . ($open ? ' open' : '') . '><summary>' . curve_esc($title) . '</summary>' . $bodyHtml . '</details>';
+    }
+    if ($type === 'timeline') {
+        return '<div class="timeline"><span class="timeline-title">' . curve_esc($params !== '' ? $params : 'Timeline') . '</span><div class="timeline-content">' . $bodyHtml . '</div></div>';
+    }
+    if ($type === 'radio') {
+        $checked = preg_match('/^(?:checked|check|true|yes|x|\[x\])$/i', $params) === 1;
+        return '<div class="radio"><div class="radio-point' . ($checked ? ' checked' : '') . '"></div>' . $bodyHtml . '</div>';
+    }
+    if ($type === 'button') {
+        $classes = array();
+        foreach (preg_split('/\s+/', $params) as $className) {
+            if (preg_match('/^[a-z][a-z0-9_-]*$/i', $className)) {
+                $classes[] = $className;
+            }
+        }
+        return '<button type="button" class="button' . (!empty($classes) ? ' ' . curve_esc(implode(' ', $classes)) : '') . '">' . $bodyHtml . '</button>';
+    }
+    if ($type === 'card') {
+        return '<div class="card">' . $bodyHtml . '</div>';
+    }
+    return '';
+}
+
+/** 渲染 vitepress-plugin-tabs 的 :::tabs / == label 语法。 */
+function curve_markdown_render_tabs($params, $body)
+{
+    $params = trim((string) $params);
+    $lines = preg_split('/\r\n|\r|\n/', (string) $body);
+    $tabs = array();
+    $current = null;
+    foreach ($lines as $line) {
+        if (preg_match('/^\s*={2,}\s*(.*?)\s*$/u', $line, $match)) {
+            if ($current !== null) {
+                $tabs[] = $current;
+            }
+            $current = array('label' => trim($match[1]), 'body' => array());
+            continue;
+        }
+        if ($current !== null) {
+            $current['body'][] = $line;
+        }
+    }
+    if ($current !== null) {
+        $tabs[] = $current;
+    }
+    if (empty($tabs)) {
+        return curve_markdown_inner_html(curve_render_markdown($body));
+    }
+
+    $sharedKey = '';
+    if (preg_match('/(?:^|\s)key:([^\s]+)/i', $params, $match)) {
+        $sharedKey = $match[1];
+    }
+    $variant = preg_match('/(?:^|\s)variant:code(?:\s|$)/i', $params) === 1 ? ' variant-code' : '';
+    $instance = substr(sha1($params . "\n" . $body . count($tabs)), 0, 10);
+    $keyAttribute = $sharedKey !== '' ? ' data-curve-tabs-key="' . curve_esc($sharedKey) . '"' : '';
+    $html = '<div class="plugin-tabs' . $variant . '" data-curve-tabs' . $keyAttribute . '><div class="plugin-tabs--tab-list" role="tablist">';
+    foreach ($tabs as $index => $tab) {
+        $panelId = 'curve-tab-' . $instance . '-' . $index;
+        $html .= '<button type="button" class="plugin-tabs--tab" role="tab" aria-selected="' . ($index === 0 ? 'true' : 'false') . '" aria-controls="' . curve_esc($panelId) . '" data-curve-tab="' . $index . '">' . curve_esc($tab['label']) . '</button>';
+    }
+    $html .= '</div>';
+    foreach ($tabs as $index => $tab) {
+        $panelId = 'curve-tab-' . $instance . '-' . $index;
+        $panelHtml = curve_markdown_inner_html(curve_render_markdown(implode("\n", $tab['body'])));
+        $html .= '<div class="plugin-tabs--content" id="' . curve_esc($panelId) . '" role="tabpanel" data-curve-tab-panel="' . $index . '"' . ($index === 0 ? '' : ' hidden') . '>' . $panelHtml . '</div>';
+    }
+    return $html . '</div>';
+}
+
+/**
+ * 把原主题的容器和 LinkCard 转成占位符，交给现有 Markdown 渲染器统一处理。
+ * 只识别白名单标签，未知的 ::: 内容仍按普通文本输出。
+ */
+function curve_markdown_prepare_extensions($content, &$extensions)
+{
+    $lines = preg_split('/\r\n|\r|\n/', (string) $content);
+    $types = array('tabs', 'details', 'timeline', 'radio', 'button', 'card', 'note', 'info', 'question', 'summary', 'tip', 'hint', 'warning', 'important', 'caution', 'danger', 'error');
+    $output = array();
+    $lineCount = count($lines);
+    for ($lineIndex = 0; $lineIndex < $lineCount; $lineIndex++) {
+        $line = $lines[$lineIndex];
+        if (!preg_match('/^\s*(:{3,})\s*([a-z][a-z0-9_-]*)(?:\s+(.*?))?\s*$/i', $line, $openMatch) || !in_array(strtolower($openMatch[2]), $types, true)) {
+            $output[] = $line;
+            continue;
+        }
+        $markerLength = strlen($openMatch[1]);
+        $depth = 1;
+        $closeIndex = null;
+        $inFence = false;
+        for ($scanIndex = $lineIndex + 1; $scanIndex < $lineCount; $scanIndex++) {
+            $scanLine = $lines[$scanIndex];
+            if (preg_match('/^\s*```/', $scanLine)) {
+                $inFence = !$inFence;
+                continue;
+            }
+            if ($inFence) {
+                continue;
+            }
+            if (preg_match('/^\s*(:{3,})\s*([a-z][a-z0-9_-]*)?(?:\s+.*?)?\s*$/i', $scanLine, $nestedOpen) && isset($nestedOpen[2]) && in_array(strtolower($nestedOpen[2]), $types, true) && strlen($nestedOpen[1]) >= $markerLength) {
+                $depth++;
+                continue;
+            }
+            if (preg_match('/^\s*:{' . $markerLength . ',}\s*$/', $scanLine)) {
+                $depth--;
+                if ($depth === 0) {
+                    $closeIndex = $scanIndex;
+                    break;
+                }
+            }
+        }
+        if ($closeIndex === null) {
+            $output[] = $line;
+            continue;
+        }
+        $bodyLines = array_slice($lines, $lineIndex + 1, $closeIndex - $lineIndex - 1);
+        $type = strtolower($openMatch[2]);
+        $params = isset($openMatch[3]) ? trim($openMatch[3]) : '';
+        $body = implode("\n", $bodyLines);
+        $html = $type === 'tabs' ? curve_markdown_render_tabs($params, $body) : curve_markdown_render_extension($type, $params, $body);
+        if ($html !== '') {
+            $extensions[] = $html;
+            $output[] = '__CURVE_EXTENSION_' . (count($extensions) - 1) . '__';
+            $lineIndex = $closeIndex;
+            continue;
+        }
+        $output[] = $line;
+    }
+
+    $content = implode("\n", $output);
+    $content = preg_replace('/<p[^>]*>\s*(<LinkCard\b.*?>)\s*<\/p>/is', '$1', $content);
+    $inFence = false;
+    $contentLines = preg_split('/\r\n|\r|\n/', $content);
+    foreach ($contentLines as $lineIndex => $line) {
+        if (!$inFence && preg_match('/<LinkCard\b/i', $line)) {
+            $contentLines[$lineIndex] = preg_replace_callback('/<LinkCard\b([^>]*?)(?:\/\s*>|>\s*<\/LinkCard\s*>)/is', function ($linkMatch) use (&$extensions) {
+                $cardHtml = curve_markdown_render_link_card($linkMatch[1]);
+                if ($cardHtml === '') {
+                    return $linkMatch[0];
+                }
+                $extensions[] = $cardHtml;
+                return '__CURVE_EXTENSION_' . (count($extensions) - 1) . '__';
+            }, $line);
+        }
+        if (preg_match('/^\s*```/', $line)) {
+            $inFence = !$inFence;
+        }
+    }
+    return implode("\n", $contentLines);
+}
+
 /** 将 Typecho 中保存的 Markdown 正文转换为文章 HTML。 */
 function curve_render_markdown($content)
 {
@@ -299,17 +898,56 @@ function curve_render_markdown($content)
     }
     /* Typecho may wrap an unparsed Markdown field in <p> tags. Convert that
      * wrapper back to Markdown before parsing; preserve already-rendered HTML. */
+    /* Typecho's Markdown plugin may turn each source line into a paragraph.
+     * Unwrap that shape before looking for Curve's block extensions. */
+    $content = preg_replace('/<p[^>]*>\s*(<LinkCard\b.*?(?:\/\s*>|>\s*<\/LinkCard\s*>))\s*<\/p>/is', '$1', $content);
+    /* A Markdown plugin does not know Curve's ::: / == markers and commonly
+     * stores them as paragraphs. Put marker-only paragraphs back on their own
+     * lines while leaving the already-rendered paragraphs and code blocks
+     * intact. */
+    $content = preg_replace_callback('/<p\b[^>]*>\s*((?::{3,}|={2,}|```)[^<]*?)\s*<\/p>/is', function ($match) {
+        return "\n" . trim($match[1]) . "\n";
+    }, $content);
+    /* Some Typecho Markdown plugins keep an entire container in one
+     * paragraph and use <br> for its source line breaks. Restore those lines
+     * too; ordinary rendered paragraphs are left untouched. */
+    $content = preg_replace_callback('/<p\b[^>]*>(.*?)<\/p>/is', function ($match) {
+        if (!preg_match('/(?::{3,}|={2,}|```)/', $match[1])) {
+            return $match[0];
+        }
+        $inner = preg_replace('/<br\s*\/?\s*>/i', "\n", $match[1]);
+        return "\n" . trim($inner) . "\n";
+    }, $content);
     $plainContent = strip_tags($content);
-    $looksLikeWrappedMarkdown = preg_match('/(?:^|\n)\s*(?:#{1,6}\s|```|[-*+]\s|\d+\.\s|>\s)/m', $plainContent)
+    $hasExtensionSyntax = preg_match('/(?:^|\n)\s*:{3,}\s*(?:tabs|details|timeline|radio|button|card|note|info|question|summary|tip|hint|warning|important|caution|danger|error)\b/im', $plainContent)
+        || preg_match('/<LinkCard\b/i', $content)
+        || preg_match('/^\s*```\s*ad-[a-z]+/im', $plainContent)
+        || preg_match('/<p[^>]*>\s*(?::{3,}|={2,}|```)/i', $content);
+    $paragraphWrappedExtension = preg_match('/<p[^>]*>\s*(?::{3,}|={2,}|```)/i', $content)
+        && !preg_match('/<(?!\/?(?:p|br)\b)[^>]+>/i', $content);
+    $looksLikeWrappedMarkdown = preg_match('/(?:^|\n)\s*(?:#{1,6}\s|```|[-*+]\s|\d+\.\s|>\s|:{3,}\s)/m', $plainContent)
         && preg_match('/^\s*<p\b/i', $content);
-    if ($looksLikeWrappedMarkdown) {
+    if ($looksLikeWrappedMarkdown || $paragraphWrappedExtension) {
         $content = preg_replace('/<br\s*\/?>/i', "\n", $content);
         $content = preg_replace('/<\/p>\s*<p[^>]*>/i', "\n\n", $content);
         $content = strip_tags($content);
-    } elseif (preg_match('/<(?:p|h[1-6]|ul|ol|pre|blockquote|div|table|img|details|figure)\b/i', $content)) {
+    } elseif (!$hasExtensionSyntax && preg_match('/<(?:p|h[1-6]|ul|ol|pre|blockquote|div|table|img|details|figure|a|span|strong|em|del|code|input|br)\b/i', $content)) {
         return curve_normalize_markdown_html($content);
     }
-    if (!preg_match('/^(?:#{1,6}\s|```|>\s|[-*+]\s|\d+\.\s|\s*\|[^\n]*\|\s*$)|(?:\*\*|__|`|!\[)/m', $content)) {
+    $extensions = array();
+    $content = curve_markdown_prepare_extensions($content, $extensions);
+    /* When Typecho has already produced HTML around the custom markers, keep
+     * that HTML and only splice in the generated Curve components. Sending it
+     * through the lightweight Markdown parser would escape every HTML tag. */
+    if (!empty($extensions) && preg_match('/<(?:p|h[1-6]|ul|ol|pre|blockquote|div|table|img|details|figure|a|span|strong|em|del|code|input|br)\b/i', $content)) {
+        $content = preg_replace_callback('/__CURVE_EXTENSION_(\d+)__/', function ($match) use ($extensions) {
+            $index = (int) $match[1];
+            return isset($extensions[$index]) ? $extensions[$index] : $match[0];
+        }, $content);
+        return curve_normalize_markdown_html($content);
+    }
+    $hasMathSyntax = preg_match('/(?:^|\n)\s*\$\$|\$(?!\$)[^$\n]+\$(?!\$)|\\\((?:.|\n)+?\\\)/u', $content);
+    if (!$hasExtensionSyntax && empty($extensions) && !$hasMathSyntax && !preg_match('/^(?:#{1,6}\s|```|>\s|[-*+]\s|\d+\.\s|\s*\|[^\n]*\|\s*$)|(?:\*\*|__|`|!\[|\[[^\]]+\]\()/m', $content)) {
         return curve_normalize_markdown_html('<p>' . nl2br(curve_esc($content)) . '</p>');
     }
 
@@ -320,6 +958,8 @@ function curve_render_markdown($content)
     $inCode = false;
     $codeLanguage = '';
     $codeLines = array();
+    $inMath = false;
+    $mathLines = array();
 
     $flushParagraph = function () use (&$html, &$paragraph) {
         if (!empty($paragraph)) {
@@ -337,15 +977,53 @@ function curve_render_markdown($content)
 
     for ($lineIndex = 0, $lineCount = count($lines); $lineIndex < $lineCount; $lineIndex++) {
         $line = $lines[$lineIndex];
+        if (preg_match('/^__CURVE_EXTENSION_(\d+)__$/', trim($line), $extensionMatch)) {
+            $flushParagraph();
+            $closeList();
+            $extensionIndex = (int) $extensionMatch[1];
+            if (isset($extensions[$extensionIndex])) {
+                $html .= $extensions[$extensionIndex];
+            }
+            continue;
+        }
+        if ($inMath) {
+            if (preg_match('/^\s*\$\$\s*$/', $line)) {
+                $html .= '<div class="math-block">\\[' . curve_esc(implode("\n", $mathLines)) . '\\]</div>';
+                $inMath = false;
+                $mathLines = array();
+            } else {
+                $mathLines[] = $line;
+            }
+            continue;
+        }
         if ($inCode) {
             if (preg_match('/^```\s*$/', trim($line))) {
-                $html .= '<pre><code' . ($codeLanguage !== '' ? ' class="language-' . curve_esc($codeLanguage) . '"' : '') . '>' . curve_esc(implode("\n", $codeLines)) . '</code></pre>';
+                if (preg_match('/^ad-([a-z]+)/i', $codeLanguage, $adMatch)) {
+                    $adType = strtolower($adMatch[1]);
+                    $adTitle = strtoupper($adType);
+                    $html .= curve_markdown_render_extension($adType, $adTitle, implode("\n", $codeLines));
+                } else {
+                    $html .= '<pre><code' . ($codeLanguage !== '' ? ' class="language-' . curve_esc($codeLanguage) . '"' : '') . '>' . curve_esc(implode("\n", $codeLines)) . '</code></pre>';
+                }
                 $inCode = false;
                 $codeLanguage = '';
                 $codeLines = array();
             } else {
                 $codeLines[] = $line;
             }
+            continue;
+        }
+        if (preg_match('/^\s*\$\$\s*$/', trim($line))) {
+            $flushParagraph();
+            $closeList();
+            $inMath = true;
+            $mathLines = array();
+            continue;
+        }
+        if (preg_match('/^\s*\$\$(.*?)\$\$\s*$/u', trim($line), $mathMatch)) {
+            $flushParagraph();
+            $closeList();
+            $html .= '<div class="math-block">\\[' . curve_esc($mathMatch[1]) . '\\]</div>';
             continue;
         }
         if ($lineIndex + 1 < $lineCount && strpos($line, '|') !== false && curve_markdown_table_separator($lines[$lineIndex + 1])) {
@@ -420,7 +1098,14 @@ function curve_render_markdown($content)
         $paragraph[] = $line;
     }
     if ($inCode) {
-        $html .= '<pre><code' . ($codeLanguage !== '' ? ' class="language-' . curve_esc($codeLanguage) . '"' : '') . '>' . curve_esc(implode("\n", $codeLines)) . '</code></pre>';
+        if (preg_match('/^ad-([a-z]+)/i', $codeLanguage, $adMatch)) {
+            $html .= curve_markdown_render_extension($adMatch[1], strtoupper($adMatch[1]), implode("\n", $codeLines));
+        } else {
+            $html .= '<pre><code' . ($codeLanguage !== '' ? ' class="language-' . curve_esc($codeLanguage) . '"' : '') . '>' . curve_esc(implode("\n", $codeLines)) . '</code></pre>';
+        }
+    }
+    if ($inMath) {
+        $html .= '<div class="math-block">\\[' . curve_esc(implode("\n", $mathLines)) . '\\]</div>';
     }
     $flushParagraph();
     $closeList();
@@ -498,6 +1183,16 @@ function curve_normalize_markdown_html($content)
         if (preg_match('/(?:lang|language)-([a-z0-9_+-]+)/i', $attributes, $languageMatch)) {
             $language = trim($languageMatch[1]);
         }
+        if (preg_match('/(?:lang|language)-ad-([a-z0-9_-]+)/i', $attributes, $adMatch)) {
+            $adType = strtolower($adMatch[1]);
+            $adHtml = curve_markdown_render_extension($adType, strtoupper($adType), html_entity_decode($match[3], ENT_QUOTES, 'UTF-8'));
+            if ($adHtml !== '') {
+                return $adHtml;
+            }
+        }
+        if (strpos($match[3], 'class="line"') !== false || strpos($match[3], "class='line'") !== false) {
+            return $match[0];
+        }
         $code = curve_highlight_code($match[3], $language);
         $langLabel = $language !== '' ? '<span class="lang">' . curve_esc($language) . '</span>' : '';
         return '<div class="language-' . curve_esc($language) . '"><button type="button" title="Copy Code" class="copy" data-copy-code aria-label="复制代码"></button>' . $langLabel . '<pre><code>' . $code . '</code></pre></div>';
@@ -515,6 +1210,36 @@ function curve_normalize_markdown_html($content)
         return '<li' . $match[1] . '><input class="task-list-item-checkbox" type="checkbox" disabled' . $checked . '> ' . $match[3] . '</li>';
     }, $content);
     $content = preg_replace('/<details\b(?![^>]*\bclass=)/i', '<details class="custom-block details"', $content);
+    /* Markdown parsers commonly wrap raw <details> blocks in paragraphs and
+     * insert a <br> before <summary>. Repair that invalid HTML before the
+     * browser reparses it and moves the details element out of place. */
+    $content = preg_replace_callback('/<p\b([^>]*)>\s*(<details\b[^>]*>)\s*(?:<br\s*\/?>\s*)?<summary\b([^>]*)>(.*?)<\/summary>\s*<\/p>/is', function ($match) {
+        return $match[2] . '<summary' . $match[3] . '>' . $match[4] . '</summary>';
+    }, $content);
+    $content = preg_replace('/<p\b[^>]*>\s*<\/details>\s*<\/p>/i', '</details>', $content);
+    /* Typecho has already built HTML tables by this point, so their cells do
+     * not pass through curve_markdown_inline. Convert only visible text
+     * nodes and leave code/pre/script content untouched. */
+    $protected = array();
+    $content = preg_replace_callback('/<(?:pre|code|script|style|textarea)\b[^>]*>.*?<\/(?:pre|code|script|style|textarea)>/is', function ($match) use (&$protected) {
+        $token = '__CURVE_PROTECTED_HTML_' . count($protected) . '__';
+        $protected[$token] = $match[0];
+        return $token;
+    }, $content);
+    $contentParts = preg_split('/(<[^>]+>)/s', $content, -1, PREG_SPLIT_DELIM_CAPTURE);
+    foreach ($contentParts as $partIndex => $part) {
+        if ($part === '' || $part[0] === '<' || strpos($part, '__CURVE_PROTECTED_HTML_') !== false) {
+            continue;
+        }
+        $contentParts[$partIndex] = preg_replace_callback('/(?<!\$)\$(?!\$)([^$\n]+?)(?<!\$)\$(?!\$)/u', function ($match) {
+            $formula = html_entity_decode($match[1], ENT_QUOTES, 'UTF-8');
+            return '<span class="math-inline">\\(' . curve_esc($formula) . '\\)</span>';
+        }, $part);
+    }
+    $content = implode('', $contentParts);
+    if (!empty($protected)) {
+        $content = strtr($content, $protected);
+    }
     $headingIndex = 0;
     $content = preg_replace_callback('/<h([1-6])([^>]*)>(.*?)<\/h\1>/is', function ($match) use (&$headingIndex) {
         $headingIndex++;
@@ -537,6 +1262,13 @@ function curve_normalize_markdown_html($content)
 function curve_markdown_inline($text)
 {
     $text = htmlspecialchars((string) $text, ENT_QUOTES, 'UTF-8');
+    $mathTokens = array();
+    $text = preg_replace_callback('/\\\\\((.+?)\\\\\)|\\\\\[(.+?)\\\\\]|(?<!\$)\$(?!\$)([^$\n]+?)(?<!\$)\$(?!\$)/us', function ($match) use (&$mathTokens) {
+        $formula = isset($match[1]) && $match[1] !== '' ? $match[1] : (isset($match[2]) && $match[2] !== '' ? $match[2] : $match[3]);
+        $index = count($mathTokens);
+        $mathTokens[$index] = $formula;
+        return 'CURVEMATHTOKEN' . $index . 'X';
+    }, $text);
     $text = preg_replace('/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)(?:\s+["\']([^"\']*)["\'])?\)/', '<img src="$2" alt="$1" title="$3">', $text);
     $text = preg_replace('/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/', '<a href="$2" target="_blank" rel="noopener">$1</a>', $text);
     $text = preg_replace('/`([^`]+)`/', '<code>$1</code>', $text);
@@ -545,6 +1277,10 @@ function curve_markdown_inline($text)
     $text = preg_replace('/(?<!\*)\*([^*]+)\*(?!\*)/', '<em>$1</em>', $text);
     $text = preg_replace('/(?<!_)_([^_]+)_(?!_)/', '<em>$1</em>', $text);
     $text = preg_replace('/~~([^~]+)~~/', '<del>$1</del>', $text);
+    $text = preg_replace_callback('/CURVEMATHTOKEN(\d+)X/', function ($match) use ($mathTokens) {
+        $index = (int) $match[1];
+        return isset($mathTokens[$index]) ? '<span class="math-inline">\\(' . $mathTokens[$index] . '\\)</span>' : $match[0];
+    }, $text);
     return $text;
 }
 
@@ -568,6 +1304,159 @@ function curve_reading_time($post)
     $text = trim(preg_replace('/\s+/u', ' ', strip_tags((string) $post->content)));
     $count = function_exists('mb_strlen') ? mb_strlen($text, 'UTF-8') : strlen($text);
     return max(1, (int) ceil($count / 450));
+}
+
+/** 返回主题阅读量表名，并让表名保持在当前 Typecho 数据库前缀下。 */
+function curve_views_table_name($db)
+{
+    return $db->getPrefix() . 'curve_views';
+}
+
+/** 引用自建表名，避免数据库前缀被当成 SQL 片段。 */
+function curve_views_quote_table($db, $table)
+{
+    if (method_exists($db, 'quoteIdentifier')) {
+        return $db->quoteIdentifier($table);
+    }
+    $adapterName = method_exists($db, 'getAdapterName') ? strtolower((string) $db->getAdapterName()) : '';
+    if (strpos($adapterName, 'pgsql') !== false || strpos($adapterName, 'postgres') !== false) {
+        return '"' . str_replace('"', '""', $table) . '"';
+    }
+    return '`' . str_replace('`', '``', $table) . '`';
+}
+
+/** 首次使用时创建阅读量表；失败时不影响文章正常显示。 */
+function curve_views_ensure_table($db, $table)
+{
+    static $ready = array();
+    if (isset($ready[$table])) {
+        return true;
+    }
+
+    $quotedTable = curve_views_quote_table($db, $table);
+    $adapterName = method_exists($db, 'getAdapterName') ? strtolower((string) $db->getAdapterName()) : '';
+    if (strpos($adapterName, 'sqlite') !== false) {
+        $sql = 'CREATE TABLE IF NOT EXISTS ' . $quotedTable . ' (`cid` INTEGER PRIMARY KEY, `views` INTEGER NOT NULL DEFAULT 0)';
+    } else {
+        $sql = 'CREATE TABLE IF NOT EXISTS ' . $quotedTable . ' (`cid` INT(10) UNSIGNED NOT NULL, `views` BIGINT(20) UNSIGNED NOT NULL DEFAULT 0, PRIMARY KEY (`cid`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4';
+    }
+
+    try {
+        $db->query($sql, Typecho_Db::WRITE, Typecho_Db::SELECT);
+        $ready[$table] = true;
+        return true;
+    } catch (Exception $exception) {
+        return false;
+    }
+}
+
+/** 读取当前访客已经看过的文章 ID，限制数量避免 Cookie 无限增长。 */
+function curve_views_cookie_ids()
+{
+    $raw = isset($_COOKIE['curve_viewed_posts']) ? (string) $_COOKIE['curve_viewed_posts'] : '';
+    $ids = array();
+    foreach (explode(',', $raw) as $value) {
+        $id = (int) $value;
+        if ($id > 0) {
+            $ids[] = $id;
+        }
+    }
+    return array_slice(array_values(array_unique($ids)), -100);
+}
+
+/** 获取站点路径，确保主题安装在子目录时 Cookie 也能正常工作。 */
+function curve_views_cookie_path()
+{
+    $options = Typecho_Widget::widget('Widget_Options');
+    $siteUrl = isset($options->siteUrl) ? (string) $options->siteUrl : '';
+    $path = parse_url($siteUrl, PHP_URL_PATH);
+    if (!is_string($path) || $path === '' || $path[0] !== '/') {
+        return '/';
+    }
+    return rtrim($path, '/') . '/';
+}
+
+/** 保存一小时内已计数的文章 ID。阅读量统计不依赖登录状态。 */
+function curve_views_mark_cookie($cid, $ids)
+{
+    $ids[] = (int) $cid;
+    $value = implode(',', array_slice(array_values(array_unique($ids)), -100));
+    if (!headers_sent()) {
+        $secure = (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off') || (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443);
+        @setcookie('curve_viewed_posts', $value, time() + 3600, curve_views_cookie_path(), '', $secure, true);
+    }
+    $_COOKIE['curve_viewed_posts'] = $value;
+}
+
+/** 读取文章阅读量。 */
+function curve_views_read($db, $quotedTable, $cid)
+{
+    $row = $db->fetchRow('SELECT `views` FROM ' . $quotedTable . ' WHERE `cid` = ' . (int) $cid . ' LIMIT 1');
+    return is_array($row) && isset($row['views']) ? (int) $row['views'] : 0;
+}
+
+/** 记录一次文章访问并返回最新阅读量。 */
+function curve_record_view($post)
+{
+    $cid = isset($post->cid) ? (int) $post->cid : 0;
+    $fallback = isset($post->views) ? (int) $post->views : 0;
+    if ($cid <= 0) {
+        return $fallback;
+    }
+
+    $viewedIds = curve_views_cookie_ids();
+    $alreadyViewed = in_array($cid, $viewedIds, true);
+    $db = Typecho_Db::get();
+    $table = curve_views_table_name($db);
+    if (!curve_views_ensure_table($db, $table)) {
+        return $fallback;
+    }
+
+    $quotedTable = curve_views_quote_table($db, $table);
+    try {
+        if (!$alreadyViewed) {
+            try {
+                $db->query('INSERT INTO ' . $quotedTable . ' (`cid`, `views`) VALUES (' . $cid . ', 1)', Typecho_Db::WRITE, Typecho_Db::INSERT);
+            } catch (Exception $exception) {
+                // 已有记录时插入会失败，此时使用数据库原子自增，避免并发访问丢计数。
+                $db->query('UPDATE ' . $quotedTable . ' SET `views` = `views` + 1 WHERE `cid` = ' . $cid, Typecho_Db::WRITE, Typecho_Db::UPDATE);
+            }
+            curve_views_mark_cookie($cid, $viewedIds);
+        }
+        return curve_views_read($db, $quotedTable, $cid);
+    } catch (Exception $exception) {
+        return $fallback;
+    }
+}
+
+/** 格式化文章日期，保持与 Curve 原主题一致。 */
+function curve_format_timestamp($timestamp)
+{
+    $timestamp = (int) $timestamp;
+    if ($timestamp <= 0) {
+        return '';
+    }
+
+    $now = time();
+    $today = strtotime(date('Y-m-d', $now));
+    $yesterday = $today - 86400;
+    if ($timestamp >= $yesterday && $timestamp < $today) {
+        return '1天前';
+    }
+
+    $difference = (int) floor(($today - $timestamp) / 86400);
+    if ($difference <= 0) {
+        return '今日内';
+    }
+    if ($difference < 7) {
+        return $difference . '天前';
+    }
+
+    $year = date('Y', $timestamp);
+    if ($year === date('Y', $now)) {
+        return date('n/j', $timestamp);
+    }
+    return date('Y/n/j', $timestamp);
 }
 
 function curve_is_enabled($options, $name, $default = true)

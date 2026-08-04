@@ -1,6 +1,7 @@
 <?php if (!defined('__TYPECHO_ROOT_DIR__')) { exit; } ?>
 <div id="main-comment" class="comment">
-    <div class="title"><span class="name"><i class="iconfont icon-chat"></i>评论</span><a class="tool" href="<?php echo curve_esc(curve_option($this->options, 'privacyUrl', '#')); ?>">隐私政策</a></div>
+    <?php $privacyUrl = curve_page_url('page-privacy.php'); if ($privacyUrl === '') $privacyUrl = curve_option($this->options, 'privacyUrl'); ?>
+    <div class="title"><span class="name"><i class="iconfont icon-chat"></i>评论</span><?php if ($privacyUrl !== ''): ?><a class="tool" href="<?php echo curve_esc($privacyUrl); ?>">隐私协议</a><?php endif; ?></div>
     <?php $this->comments()->to($comments); ?>
     <?php $commentEnabled = curve_is_enabled($this->options, 'commentEnable', true); $commentFormPosition = curve_option($this->options, 'commentFormPosition', 'bottom'); if ($commentEnabled && $this->allow('comment') && $commentFormPosition === 'top') curve_comment_form($this, $comments, $this->options, $this->user, $this->commentUrl); ?>
     <?php if ($comments->have()): ?><?php $comments->listComments(); ?><?php $comments->pageNav('上页', '下页', 1, '…'); ?><?php else: ?><p class="comment-empty">暂无评论，欢迎留下第一条评论。</p><?php endif; ?>

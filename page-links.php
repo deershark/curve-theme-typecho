@@ -11,9 +11,14 @@ if (!defined('__TYPECHO_ROOT_DIR__')) { exit; }
 $pageSource = isset($this->text) ? (string) $this->text : '';
 $pageSource = preg_replace('/^<!--markdown-->/i', '', $pageSource);
 $friendBlocks = array();
-$pageSource = preg_replace_callback('/<!--\s*curve-friends\b(.*?)-->/is', function ($match) use (&$friendBlocks) {
+$friendTotal = 0;
+$pageSource = preg_replace_callback('/<!--\s*curve-friends\b(.*?)-->/is', function ($match) use (&$friendBlocks, &$friendTotal) {
     $slot = 'CURVEFRIENDSSLOT' . count($friendBlocks);
-    $friendBlocks[$slot] = curve_render_friend_groups(curve_parse_friend_markdown($match[1]));
+    $groups = curve_parse_friend_markdown($match[1]);
+    foreach ($groups as $group) {
+        $friendTotal += count($group['typeList']);
+    }
+    $friendBlocks[$slot] = curve_render_friend_groups($groups);
     return "\n\n" . $slot . "\n\n";
 }, $pageSource);
 $pageHtml = curve_render_markdown($pageSource);
@@ -28,7 +33,7 @@ foreach ($friendBlocks as $slot => $html) {
         <div class="cat-or-tag">
             <div class="title">
                 <h1 class="title-name">友情链接</h1>
-                <span class="title-num">友链总览</span>
+                <span class="title-num">友链总览 · <?php echo $friendTotal; ?> 个友链</span>
             </div>
         </div>
         <div class="markdown-main-style">

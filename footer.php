@@ -7,6 +7,8 @@ $categoriesUrl = curve_page_url('page-categories.php');
 $tagsUrl = curve_page_url('page-tags.php');
 $aboutUrl = curve_page_url('page-about.php');
 $linksUrl = curve_page_url('page-links.php');
+$privacyUrl = curve_page_url('page-privacy.php');
+if ($privacyUrl === '') $privacyUrl = curve_option($this->options, 'privacyUrl');
 $reportUrl = curve_option($this->options, 'reportUrl');
 $feedUrl = (string) $this->options->feedUrl;
 $socialLinks = curve_link_rows(curve_option($this->options, 'socialLinks'));
@@ -18,48 +20,82 @@ if (empty($socialLinks)) {
     if ($authorLink !== '' && $authorLink !== $siteUrl) $socialLinks[] = array('name' => 'GitHub', 'url' => $authorLink);
     if ($authorEmail !== '') $socialLinks[] = array('name' => 'Email', 'url' => 'mailto:' . $authorEmail);
 }
-$footerColumns = curve_footer_columns(curve_option($this->options, 'footerSitemap'));
-if (empty($footerColumns)) {
-    $blogLinks = array(array('name' => '近期文章', 'url' => $siteUrl . '/', 'newTab' => false));
-    $columnLinks = array();
-    if ($categoriesUrl !== '') $columnLinks[] = array('name' => '全部分类', 'url' => $categoriesUrl, 'newTab' => false);
-    if ($tagsUrl !== '') $columnLinks[] = array('name' => '全部标签', 'url' => $tagsUrl, 'newTab' => false);
-    if ($archiveUrl !== '') $columnLinks[] = array('name' => '文章归档', 'url' => $archiveUrl, 'newTab' => false);
-    $blogLinks = array_merge($blogLinks, $columnLinks);
-    $columnLinks = array();
-    if ($archiveUrl !== '') $columnLinks[] = array('name' => '文章归档', 'url' => $archiveUrl, 'newTab' => false);
-    if ($categoriesUrl !== '') $columnLinks[] = array('name' => '全部分类', 'url' => $categoriesUrl, 'newTab' => false);
-    if ($tagsUrl !== '') $columnLinks[] = array('name' => '全部标签', 'url' => $tagsUrl, 'newTab' => false);
-    $serviceLinks = array(array('name' => '站点订阅', 'url' => $feedUrl, 'newTab' => false));
-    if ($reportUrl !== '') $serviceLinks[] = array('name' => '反馈与投诉', 'url' => $reportUrl, 'newTab' => false);
-    $footerColumns = array(
-        array('title' => '博客', 'links' => $blogLinks),
-        array('title' => '项目', 'links' => array(
-            array('name' => 'Curve 主题', 'url' => 'https://github.com/imsyy/vitepress-theme-curve', 'newTab' => true),
-            array('name' => 'Typecho', 'url' => 'https://typecho.org/', 'newTab' => true),
-        )),
-        array('title' => '专栏', 'links' => $columnLinks),
-        array('title' => '页面', 'links' => array_filter(array(
-            $aboutUrl !== '' ? array('name' => '关于本站', 'url' => $aboutUrl, 'newTab' => false) : null,
-            $linksUrl !== '' ? array('name' => '友情链接', 'url' => $linksUrl, 'newTab' => false) : null,
-        ))),
-        array('title' => '服务', 'links' => $serviceLinks),
-    );
-    $footerColumns = array_values(array_filter($footerColumns, function ($column) {
-        return !empty($column['links']);
-    }));
+$blogLinks = array(array('name' => '近期文章', 'url' => $siteUrl . '/', 'newTab' => false));
+$columnLinks = array();
+if ($categoriesUrl !== '') $columnLinks[] = array('name' => '全部分类', 'url' => $categoriesUrl, 'newTab' => false);
+if ($tagsUrl !== '') $columnLinks[] = array('name' => '全部标签', 'url' => $tagsUrl, 'newTab' => false);
+if ($archiveUrl !== '') $columnLinks[] = array('name' => '文章归档', 'url' => $archiveUrl, 'newTab' => false);
+$blogLinks = array_merge($blogLinks, $columnLinks);
+$columnLinks = array();
+if ($archiveUrl !== '') $columnLinks[] = array('name' => '文章归档', 'url' => $archiveUrl, 'newTab' => false);
+if ($categoriesUrl !== '') $columnLinks[] = array('name' => '全部分类', 'url' => $categoriesUrl, 'newTab' => false);
+if ($tagsUrl !== '') $columnLinks[] = array('name' => '全部标签', 'url' => $tagsUrl, 'newTab' => false);
+$serviceLinks = array(array('name' => '站点订阅', 'url' => $feedUrl, 'newTab' => false));
+if ($privacyUrl !== '') $serviceLinks[] = array('name' => '隐私协议', 'url' => $privacyUrl, 'newTab' => false);
+if ($reportUrl !== '') $serviceLinks[] = array('name' => '反馈与投诉', 'url' => $reportUrl, 'newTab' => false);
+$footerColumns = array(
+    array('title' => '博客', 'links' => $blogLinks),
+    array('title' => '专栏', 'links' => $columnLinks),
+    array('title' => '页面', 'links' => array_filter(array(
+        $aboutUrl !== '' ? array('name' => '关于本站', 'url' => $aboutUrl, 'newTab' => false) : null,
+        $linksUrl !== '' ? array('name' => '友情链接', 'url' => $linksUrl, 'newTab' => false) : null,
+    ))),
+    array('title' => '服务', 'links' => $serviceLinks),
+);
+$footerColumns = array_values(array_filter($footerColumns, function ($column) {
+    return !empty($column['links']);
+}));
+if ($privacyUrl !== '') {
+    $privacyAdded = false;
+    foreach ($footerColumns as &$footerColumn) {
+        if ($footerColumn['title'] !== '服务') continue;
+        foreach ($footerColumn['links'] as $footerLink) {
+            if ($footerLink['url'] === $privacyUrl || $footerLink['name'] === '隐私协议' || $footerLink['name'] === '隐私政策') {
+                $privacyAdded = true;
+                break 2;
+            }
+        }
+        $footerColumn['links'][] = array('name' => '隐私协议', 'url' => $privacyUrl, 'newTab' => false);
+        $privacyAdded = true;
+        break;
+    }
+    unset($footerColumn);
+    if (!$privacyAdded) $footerColumns[] = array('title' => '服务', 'links' => array(array('name' => '隐私协议', 'url' => $privacyUrl, 'newTab' => false)));
 }
-$footerLinks = curve_link_rows(curve_option($this->options, 'footerLinks'));
-if (!empty($footerLinks)) $footerColumns[] = array('title' => '链接', 'links' => $footerLinks);
+$hasFriendColumn = false;
+foreach ($footerColumns as $footerColumn) {
+    if ($footerColumn['title'] === '友链') {
+        $hasFriendColumn = true;
+        break;
+    }
+}
+$footerFriends = curve_footer_friend_links();
+if (!$hasFriendColumn && !empty($footerFriends)) {
+    shuffle($footerFriends);
+    $footerColumns[] = array('title' => '友链', 'friends' => $footerFriends, 'friendCount' => min(3, count($footerFriends)));
+}
 ?>
 <div class="footer-link">
     <?php if ($this->is('post')): ?><div class="footer-bar"><span class="site-title"><?php $this->options->title(); ?></span><span class="site-desc"><?php $this->options->description(); ?></span><a href="<?php $this->options->siteUrl(); ?>" class="to-home">了解更多</a></div><?php endif; ?>
     <div class="footer-social">
-        <?php $half = (int) ceil(count($socialLinks) / 2); ?><div class="footer-social-side footer-social-left"><?php foreach (array_slice($socialLinks, 0, $half) as $link): ?><?php $socialIcon = curve_social_icon($link['name']); ?><a href="<?php echo curve_esc($link['url']); ?>" target="_blank" rel="noopener" class="social-link" title="<?php echo curve_esc($link['name']); ?>" aria-label="<?php echo curve_esc($link['name']); ?>"><?php if ($socialIcon === 'twitter'): ?><span class="social-mark social-mark-twitter" aria-hidden="true">𝕏</span><?php else: ?><i class="iconfont icon-<?php echo curve_esc($socialIcon); ?>" aria-hidden="true"></i><?php endif; ?></a><?php endforeach; ?></div>
+        <?php $half = (int) ceil(count($socialLinks) / 2); ?><div class="footer-social-side footer-social-left"><?php foreach (array_slice($socialLinks, 0, $half) as $link): ?><?php $socialIcon = curve_social_icon_for_link($link); ?><a href="<?php echo curve_esc($link['url']); ?>" target="_blank" rel="noopener" class="social-link" title="<?php echo curve_esc($link['name']); ?>" aria-label="<?php echo curve_esc($link['name']); ?>"><?php if ($socialIcon === 'twitter'): ?><span class="social-mark social-mark-twitter" aria-hidden="true">𝕏</span><?php else: ?><i class="iconfont icon-<?php echo curve_esc($socialIcon); ?>" aria-hidden="true"></i><?php endif; ?></a><?php endforeach; ?></div>
         <?php $authorCover = curve_option($this->options, 'logoUrl'); if ($authorCover === '') { ob_start(); $this->options->themeUrl('assets/images/logo.webp'); $authorCover = ob_get_clean(); } $footerAvatarEmoji = trim((string) curve_option($this->options, 'footerAvatarEmoji')); $footerAvatarMessage = trim((string) curve_option($this->options, 'footerAvatarMessage')); ?><div class="footer-avatar"><div class="logo" title="返回顶部" data-scroll-top><img src="<?php echo curve_esc($authorCover); ?>" alt="author" class="author"></div><?php if ($footerAvatarEmoji !== '' && $footerAvatarMessage !== ''): ?><button type="button" class="footer-avatar-note" aria-label="<?php echo curve_esc($footerAvatarMessage); ?>"><span class="footer-avatar-note-emoji" aria-hidden="true"><?php echo curve_esc($footerAvatarEmoji); ?></span><span class="footer-avatar-note-text"><?php echo curve_esc($footerAvatarMessage); ?></span></button><?php endif; ?></div>
-        <div class="footer-social-side footer-social-right"><?php foreach (array_slice($socialLinks, $half) as $link): ?><?php $socialIcon = curve_social_icon($link['name']); ?><a href="<?php echo curve_esc($link['url']); ?>" target="_blank" rel="noopener" class="social-link" title="<?php echo curve_esc($link['name']); ?>" aria-label="<?php echo curve_esc($link['name']); ?>"><?php if ($socialIcon === 'twitter'): ?><span class="social-mark social-mark-twitter" aria-hidden="true">𝕏</span><?php else: ?><i class="iconfont icon-<?php echo curve_esc($socialIcon); ?>" aria-hidden="true"></i><?php endif; ?></a><?php endforeach; ?></div>
+        <div class="footer-social-side footer-social-right"><?php foreach (array_slice($socialLinks, $half) as $link): ?><?php $socialIcon = curve_social_icon_for_link($link); ?><a href="<?php echo curve_esc($link['url']); ?>" target="_blank" rel="noopener" class="social-link" title="<?php echo curve_esc($link['name']); ?>" aria-label="<?php echo curve_esc($link['name']); ?>"><?php if ($socialIcon === 'twitter'): ?><span class="social-mark social-mark-twitter" aria-hidden="true">𝕏</span><?php else: ?><i class="iconfont icon-<?php echo curve_esc($socialIcon); ?>" aria-hidden="true"></i><?php endif; ?></a><?php endforeach; ?></div>
     </div>
-    <?php if (!empty($footerColumns)): ?><div class="footer-sitemap"><?php foreach ($footerColumns as $column): ?><div class="sitemap-item"><span class="title"><?php echo curve_esc($column['title']); ?></span><div class="links"><?php foreach ($column['links'] as $link): ?><a href="<?php echo curve_esc($link['url']); ?>" class="link-text"<?php echo !empty($link['newTab']) ? ' target="_blank" rel="noopener"' : ''; ?>><?php echo curve_esc($link['name']); ?></a><?php endforeach; ?></div></div><?php endforeach; ?></div><?php endif; ?>
+    <?php if (!empty($footerColumns)): ?><div class="footer-sitemap">
+        <?php foreach ($footerColumns as $column): ?>
+            <?php if (isset($column['friends'])): ?>
+                <?php $friendPayload = json_encode($column['friends'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?><div class="sitemap-item sitemap-friends" data-footer-friends data-friend-count="<?php echo (int) $column['friendCount']; ?>" data-friends="<?php echo curve_esc($friendPayload); ?>">
+                    <span class="title friends"><span>友链</span><button type="button" class="friends-refresh" data-footer-friends-refresh title="刷新友链" aria-label="刷新友链"><i class="iconfont icon-refresh" aria-hidden="true"></i></button></span>
+                    <div class="links friend-links" data-footer-friend-list aria-live="polite">
+                        <?php foreach (array_slice($column['friends'], 0, $column['friendCount']) as $friend): ?><a href="<?php echo curve_esc($friend['url']); ?>" class="link-text" target="_blank" rel="noopener" title="<?php echo curve_esc($friend['desc']); ?>"><?php echo curve_esc($friend['name']); ?></a><?php endforeach; ?>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="sitemap-item"><span class="title"><?php echo curve_esc($column['title']); ?></span><div class="links"><?php foreach ($column['links'] as $link): ?><a href="<?php echo curve_esc($link['url']); ?>" class="link-text"<?php echo !empty($link['newTab']) ? ' target="_blank" rel="noopener"' : ''; ?>><?php echo curve_esc($link['name']); ?></a><?php endforeach; ?></div></div>
+            <?php endif; ?>
+        <?php endforeach; ?>
+    </div><?php endif; ?>
 </div>
 <footer id="main-footer" class="main-footer">
     <div class="footer-content">

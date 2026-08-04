@@ -14,7 +14,27 @@
 </head>
 <body>
 <?php $logo = curve_option($this->options, 'logoUrl'); if ($logo !== '') { $loadingLogo = $logo; } else { ob_start(); $this->options->themeUrl('assets/images/logo.webp'); $loadingLogo = ob_get_clean(); } ?>
-<?php $archiveUrl = curve_page_url('page-archives.php'); $aboutUrl = curve_page_url('page-about.php'); $linksUrl = curve_page_url('page-links.php'); $categoriesUrl = curve_page_url('page-categories.php'); $tagsUrl = curve_page_url('page-tags.php'); ?>
+<?php
+$archiveUrl = curve_page_url('page-archives.php');
+$aboutUrl = curve_page_url('page-about.php');
+$linksUrl = curve_page_url('page-links.php');
+$categoriesUrl = curve_page_url('page-categories.php');
+$tagsUrl = curve_page_url('page-tags.php');
+$moreMenu = curve_top_left_menu_rows(curve_option($this->options, 'topLeftMenu'));
+if (empty($moreMenu)) {
+    $moreMenu = array(array('group' => '博客', 'name' => '主站', 'url' => $this->options->siteUrl, 'icon' => 'home', 'image' => true));
+    if ($archiveUrl !== '') {
+        $moreMenu[] = array('group' => '博客', 'name' => '文章归档', 'url' => $archiveUrl, 'icon' => 'article');
+    }
+}
+$moreGroups = array();
+foreach ($moreMenu as $moreItem) {
+    if (!isset($moreGroups[$moreItem['group']])) {
+        $moreGroups[$moreItem['group']] = array();
+    }
+    $moreGroups[$moreItem['group']][] = $moreItem;
+}
+?>
 <div id="app" class="is-loading" aria-busy="true">
     <div class="background patterns light" data-background="patterns" aria-hidden="true">
         <img id="background-cover" class="cover" data-background-cover alt="background" hidden>
@@ -30,15 +50,12 @@
                     <div class="more-menu nav-btn" title="更多内容" tabindex="0">
                         <i class="iconfont icon-menu"></i>
                         <div class="more-card s-card">
-                            <div class="more-item">
-                                <span class="more-name">博客</span>
+                            <?php foreach ($moreGroups as $groupName => $groupItems): ?><div class="more-item">
+                                <span class="more-name"><?php echo curve_esc($groupName); ?></span>
                                 <div class="more-list">
-                                    <a href="<?php $this->options->siteUrl(); ?>" class="more-link"><img class="link-icon" src="<?php echo curve_esc($logo ?: $this->options->siteUrl()); ?>" alt="博客"><span class="link-name">主站</span></a>
-                                    <?php if ($archiveUrl !== ''): ?><a href="<?php echo curve_esc($archiveUrl); ?>" class="more-link"><i class="iconfont icon-article link-icon"></i><span class="link-name">文章归档</span></a><?php endif; ?>
+                                    <?php foreach ($groupItems as $moreItem): ?><a href="<?php echo curve_esc($moreItem['url']); ?>" class="more-link"><?php if (!empty($moreItem['image'])): ?><img class="link-icon" src="<?php echo curve_esc($logo ?: $this->options->siteUrl); ?>" alt="<?php echo curve_esc($moreItem['name']); ?>"><?php elseif (!empty($moreItem['iconUrl'])): ?><img class="link-icon" src="<?php echo curve_esc($moreItem['iconUrl']); ?>" alt="<?php echo curve_esc($moreItem['name']); ?>"><?php else: ?><i class="iconfont icon-<?php echo curve_esc($moreItem['icon']); ?> link-icon"></i><?php endif; ?><span class="link-name"><?php echo curve_esc($moreItem['name']); ?></span></a><?php endforeach; ?>
                                 </div>
-                            </div>
-                            <?php $moreLinks = curve_link_rows(curve_option($this->options, 'footerLinks')); ?>
-                            <?php if (!empty($moreLinks)): ?><div class="more-item"><span class="more-name">链接</span><div class="more-list"><?php foreach ($moreLinks as $link): ?><a href="<?php echo curve_esc($link['url']); ?>" class="more-link" target="_blank" rel="noopener"><i class="iconfont icon-link link-icon"></i><span class="link-name"><?php echo curve_esc($link['name']); ?></span></a><?php endforeach; ?></div></div><?php endif; ?>
+                            </div><?php endforeach; ?>
                         </div>
                     </div>
                     <a class="site-name" href="<?php $this->options->siteUrl(); ?>"><?php $this->options->title(); ?></a>
@@ -46,13 +63,15 @@
                 <div class="nav-center">
                     <div class="site-menu">
                         <div class="menu-item"><span class="link-btn">文库</span><div class="link-child">
-                            <?php if ($archiveUrl !== ''): ?><a class="link-child-btn" href="<?php echo curve_esc($archiveUrl); ?>"><i class="iconfont icon-article"></i>文章列表</a><?php endif; ?>
+                            <?php if ($archiveUrl !== ''): ?><a class="link-child-btn" href="<?php echo curve_esc($archiveUrl); ?>"><i class="iconfont icon-article"></i>文章归档</a><?php endif; ?>
                             <?php if ($categoriesUrl !== ''): ?><a class="link-child-btn" href="<?php echo curve_esc($categoriesUrl); ?>"><i class="iconfont icon-folder"></i>全部分类</a><?php endif; ?>
                             <?php if ($tagsUrl !== ''): ?><a class="link-child-btn" href="<?php echo curve_esc($tagsUrl); ?>"><i class="iconfont icon-hashtag"></i>全部标签</a><?php endif; ?>
                         </div></div>
+                        <div class="menu-item"><span class="link-btn">友链</span><div class="link-child">
+                            <?php if ($linksUrl !== ''): ?><a class="link-child-btn" href="<?php echo curve_esc($linksUrl); ?>"><i class="iconfont icon-people"></i>友情链接</a><?php endif; ?>
+                        </div></div>
                         <div class="menu-item"><span class="link-btn">我的</span><div class="link-child">
                             <?php if ($aboutUrl !== ''): ?><a class="link-child-btn" href="<?php echo curve_esc($aboutUrl); ?>"><i class="iconfont icon-contacts"></i>关于本站</a><?php endif; ?>
-                            <?php if ($linksUrl !== ''): ?><a class="link-child-btn" href="<?php echo curve_esc($linksUrl); ?>"><i class="iconfont icon-people"></i>友情链接</a><?php endif; ?>
                         </div></div>
                     </div>
                     <span class="site-title" data-scroll-top><?php $this->is('index') ? $this->options->description() : $this->archiveTitle('', '', ''); ?></span>
@@ -74,8 +93,9 @@
             <div class="menu-content s-card">
                 <button class="close-control" data-mobile-close><i class="iconfont icon-close"></i></button>
                 <div class="menu-list">
-                    <div class="menu-item"><span class="link-title">文库</span><div class="link-child"><?php if ($archiveUrl !== ''): ?><a class="link-child-btn" href="<?php echo curve_esc($archiveUrl); ?>"><i class="iconfont icon-article"></i><span class="name">文章列表</span></a><?php endif; ?><?php if ($categoriesUrl !== ''): ?><a class="link-child-btn" href="<?php echo curve_esc($categoriesUrl); ?>"><i class="iconfont icon-folder"></i><span class="name">全部分类</span></a><?php endif; ?><?php if ($tagsUrl !== ''): ?><a class="link-child-btn" href="<?php echo curve_esc($tagsUrl); ?>"><i class="iconfont icon-hashtag"></i><span class="name">全部标签</span></a><?php endif; ?></div></div>
-                    <div class="menu-item"><span class="link-title">我的</span><div class="link-child"><?php if ($aboutUrl !== ''): ?><a class="link-child-btn" href="<?php echo curve_esc($aboutUrl); ?>"><span class="name">关于本站</span></a><?php endif; ?><?php if ($linksUrl !== ''): ?><a class="link-child-btn" href="<?php echo curve_esc($linksUrl); ?>"><span class="name">友情链接</span></a><?php endif; ?></div></div>
+                    <div class="menu-item"><span class="link-title">文库</span><div class="link-child"><?php if ($archiveUrl !== ''): ?><a class="link-child-btn" href="<?php echo curve_esc($archiveUrl); ?>"><i class="iconfont icon-article"></i><span class="name">文章归档</span></a><?php endif; ?><?php if ($categoriesUrl !== ''): ?><a class="link-child-btn" href="<?php echo curve_esc($categoriesUrl); ?>"><i class="iconfont icon-folder"></i><span class="name">全部分类</span></a><?php endif; ?><?php if ($tagsUrl !== ''): ?><a class="link-child-btn" href="<?php echo curve_esc($tagsUrl); ?>"><i class="iconfont icon-hashtag"></i><span class="name">全部标签</span></a><?php endif; ?></div></div>
+                    <div class="menu-item"><span class="link-title">友链</span><div class="link-child"><?php if ($linksUrl !== ''): ?><a class="link-child-btn" href="<?php echo curve_esc($linksUrl); ?>"><span class="name">友情链接</span></a><?php endif; ?></div></div>
+                    <div class="menu-item"><span class="link-title">我的</span><div class="link-child"><?php if ($aboutUrl !== ''): ?><a class="link-child-btn" href="<?php echo curve_esc($aboutUrl); ?>"><span class="name">关于本站</span></a><?php endif; ?></div></div>
                 </div>
             </div>
         </div>
