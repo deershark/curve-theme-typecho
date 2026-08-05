@@ -5459,31 +5459,6 @@ a:hover {
   }
 }
 
-/* views/Project.vue */
-.project .banner-page .to-github {
-  height: 40px;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50px;
-  color: #fff;
-  background-color: var(--main-dark-opacity);
-  backdrop-filter: blur(20px);
-  transition: color 0.3s, background-color 0.3s;
-}
-.project .banner-page .to-github .iconfont {
-  margin-right: 8px;
-  transition: color 0.3s;
-}
-.project .banner-page .to-github:hover {
-  color: var(--main-card-background);
-  background-color: var(--main-color);
-}
-.project .banner-page .to-github:hover .iconfont {
-  color: var(--main-card-background) !important;
-}
-
 /* Typecho data adapters. The surrounding selectors intentionally use Curve's
  * original component class names; these rules only cover Typecho-generated
  * markup that has no VitePress equivalent. */

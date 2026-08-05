@@ -754,7 +754,7 @@ function curve_render_friend_groups($groups)
     return $html . '</div>';
 }
 
-/** 读取友情链接页中的友链，并提供原 Curve 主题的默认推荐数据作为兜底。 */
+/** 读取友情链接页中的友链；未配置时返回空数组。 */
 function curve_footer_friend_links()
 {
     static $friends;
@@ -783,18 +783,7 @@ function curve_footer_friend_links()
             }
         }
     } catch (Exception $exception) {
-        // 友链只影响页脚展示，读取失败时继续使用默认数据。
-    }
-
-    if (empty($friends)) {
-        $friends = array(
-            array('name' => '阮一峰', 'avatar' => 'https://pic.efefee.cn/uploads/2024/02/26/65dc5fb729cdb.webp', 'desc' => '阮老师，知名博主，大佬中的大佬', 'url' => 'https://www.ruanyifeng.com/blog/'),
-            array('name' => '张洪 Heo', 'avatar' => 'https://pic.efefee.cn/uploads/2024/02/26/65dc5304b211c.webp', 'desc' => '产品设计师，独立开发者，设计与科技分享', 'url' => 'https://blog.zhheo.com/'),
-            array('name' => '杜老师说', 'avatar' => 'https://pic.efefee.cn/uploads/2024/02/28/65de92770fb66.webp', 'desc' => '网络工程、网站技术与运维分享', 'url' => 'https://dusays.com/'),
-            array('name' => 'XAOXUU', 'avatar' => 'https://pic.efefee.cn/uploads/2024/02/29/65dfe0f7a945b.webp', 'desc' => 'Hexo Stellar、Volantis 主题作者', 'url' => 'https://xaoxuu.com/'),
-            array('name' => '风记星辰', 'avatar' => 'https://pic.efefee.cn/uploads/2024/02/29/65dfe827e319c.webp', 'desc' => '有着优秀设计与交互的博客', 'url' => 'https://www.thyuu.com/'),
-            array('name' => 'DIYgod', 'avatar' => 'https://pic.efefee.cn/uploads/2024/03/14/65f2c2bb8c17c.gif', 'desc' => '写代码是热爱，写到世界充满爱！', 'url' => 'https://diygod.cc/'),
-        );
+        // 友链只影响页脚展示，读取失败时保持为空。
     }
 
     $unique = array();

@@ -82,16 +82,16 @@ git clone https://github.com/deershark/typecho-theme-curve.git curve
 ```md
 <!-- curve-friends
 ## 推荐 | 推荐关注的站点
-- 阮一峰 | https://www.ruanyifeng.com/blog/ | https://example.com/avatar.png | 阮老师，知名博主
+- 示例站点 | https://example.com/ | https://example.com/avatar.png | 站点简介
 
 ## 小伙伴 | 一起交流和成长
-- 我的博客 | https://example.com/ | https://example.com/avatar.png | 分享技术与生活
+- 另一个示例站点 | https://example.org/ | https://example.com/avatar.png | 分享技术与生活
 -->
 ```
 
 列表格式为 `名称 | 链接 | 头像 | 简介`。分组标题可以省略，也可以使用 1 到 6 级 Markdown 标题。配置块之外的正文仍会按普通 Markdown 渲染。
 
-页脚会随机展示 3 个友链，并提供刷新按钮更换列表；没有配置友情链接页时，会使用主题内置的默认推荐友链。
+页脚会随机展示 3 个已配置的友链，并提供刷新按钮更换列表；没有配置友情链接页或没有有效友链时，页脚不显示友链栏。
 
 ## 内容扩展
 
