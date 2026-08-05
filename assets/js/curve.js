@@ -226,7 +226,7 @@
     });
   });
 
-  /* ArticleGPT.vue writes the supplied frontmatter one character at a time:
+  /* The summary widget writes the supplied description one character at a time:
    * first wait 2.5–3.8 seconds, then use a random 30–150ms cadence. */
   Array.prototype.forEach.call(document.querySelectorAll("[data-fake-gpt]"), function (card) {
     var source = card.getAttribute("data-fake-gpt-summary") || "";

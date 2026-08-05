@@ -73,7 +73,7 @@ git clone https://github.com/deershark/curve-theme-typecho.git curve
 | `copyright` | 填写 `0` 隐藏版权卡片 |
 | `views` | 文章阅读量，由主题自动累加 |
 
-旧文章中的 `articleGPT` 字段仍会兼容读取，但新文章请使用 `description`。主题设置中的 FakeGPT 摘要可以控制摘要卡片及其点击文案。
+文章摘要统一使用 `description` 字段。主题设置中的 FakeGPT 摘要可以控制摘要卡片及其点击文案。
 
 ## 友情链接
 

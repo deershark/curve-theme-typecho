@@ -1042,7 +1042,7 @@ a:hover {
   transition-delay: 0s, 0s, 0s, 0.35s;
 }
 
-/* components/Aside/Widgets/ArticleGPT.vue */
+/* FakeGPT summary widget */
 .article-gpt {
   margin-top: 1.2rem;
   background-color: var(--main-card-second-background);
@@ -5572,7 +5572,7 @@ button.s-card,
   animation: loading 2s infinite;
 }
 
-/* In Vue this state class was scoped to ArticleGPT.vue. Keep it distinct from
+/* Keep this state class distinct from
  * Loading.vue's global `.loading`, which is a fixed full-screen overlay. */
 .article-gpt .title .logo.fake-gpt-loading {
   animation: loading 1s infinite;

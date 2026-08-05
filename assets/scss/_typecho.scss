@@ -61,7 +61,7 @@ button.s-card,
   animation: none;
 }
 .loading[data-loading] .logo { animation: loading 2s infinite; }
-/* In Vue this state class was scoped to ArticleGPT.vue. Keep it distinct from
+/* Keep this state class distinct from
  * Loading.vue's global `.loading`, which is a fixed full-screen overlay. */
 .article-gpt .title .logo.fake-gpt-loading {
   animation: loading 1s infinite;
