@@ -132,9 +132,9 @@ function themeConfig($form)
 {
     /* 基础信息 */
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('siteAuthorName', null, 'Admin', _t('博主名称'), _t('显示在侧栏和页脚。')));
-    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('siteAuthorLink', null, '', _t('博主链接'), _t('可填写个人主页、博客或社交主页。')));
-    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('siteAuthorEmail', null, '', _t('博主邮箱'), _t('用于没有单独配置 Email 链接时生成默认社交入口。')));
-    $form->addInput(new Typecho_Widget_Helper_Form_Element_Textarea('intro', null, '记录值得分享的技术、想法与生活。', _t('站点简介'), _t('显示在首页侧栏和页脚。')));
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('siteAuthorLink', null, '', _t('博主链接'), _t('未配置社交链接时用于生成默认社交入口，也会作为页脚版权署名的链接。')));
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('siteAuthorEmail', null, '', _t('博主邮箱'), _t('未配置社交链接时用于生成默认 Email 社交入口。')));
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Textarea('intro', null, '记录值得分享的技术、想法与生活。', _t('站点简介'), _t('显示在侧栏时钟卡片中，鼠标悬停时替换时钟显示。')));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Select(
         'homeSubtitleMode', array('custom' => _t('自定义文本'), 'hitokoto' => _t('一言')), 'custom', _t('首页副标题来源'), _t('控制“你好，欢迎来到……”下面的文本；选择一言后才会请求一言接口。')
     ));
@@ -144,9 +144,9 @@ function themeConfig($form)
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Text(
         'sidebarAuthorDescription', null, '分享技术生活', _t('侧栏作者简介'), _t('显示在右侧时钟卡片的作者名称下方。')
     ));
-    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('logoUrl', null, '', _t('Logo 地址'), _t('留空时显示主题默认 Logo；可填写媒体库或外部图片地址。')));
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('logoUrl', null, '', _t('Logo 地址'), _t('用于页面加载动画和页脚头像；留空时使用主题默认 Logo。')));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('recordNumber', null, '', _t('备案号'), _t('留空则不显示备案号。')));
-    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('since', null, '', _t('建站日期'), _t('格式：2020-07-28；用于页脚运行天数。')));
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('since', null, '', _t('建站日期'), _t('格式：2020-07-28；用于侧栏站点数据和“关于本站”页面的建站天数。')));
 
     /* 外观 */
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('accentColor', null, '', _t('强调色'), _t('留空使用主题原色；支持三位或六位十六进制颜色。')));
@@ -179,13 +179,13 @@ function themeConfig($form)
     $defaultBackgroundUrl->addRule('curve_validate_background_url', _t('背景图片地址必须是 http(s) 地址或站内绝对路径。'));
     $form->addInput($defaultBackgroundUrl);
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Select(
-        'fontSource', array('local' => _t('本地字体'), 'cdn' => _t('CDN（cdn.jsdmirror.com）')), 'cdn', _t('字体源'), _t('本地模式使用主题目录中的全部字体文件，不依赖 cdn.jsdmirror.com；CDN 模式使用对应的远程字体。'))
+        'fontSource', array('local' => _t('本地字体'), 'cdn' => _t('CDN（cdn.jsdmirror.com）')), 'cdn', _t('字体源'), _t('本地模式使用主题内置字体，不依赖 cdn.jsdmirror.com；CDN 模式使用对应的远程字体。'))
     );
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Select(
         'coverLayout', array('left' => _t('封面在左'), 'right' => _t('封面在右'), 'both' => _t('交替排列'), 'grid' => _t('双列卡片')), 'both', _t('文章列表封面布局')
     ));
     $defaultCovers = new Typecho_Widget_Helper_Form_Element_Textarea(
-        'defaultCovers', null, '[]', _t('默认封面'), _t('使用下方的封面列表编辑器添加图片；文章未设置 cover 时随机使用。')
+        'defaultCovers', null, '[]', _t('默认封面'), _t('使用下方的封面列表编辑器添加图片；文章未设置 cover 时按文章 ID 从列表中分配。')
     );
     $defaultCovers->addRule('curve_validate_cover_urls_json', _t('默认封面配置格式不正确，请检查图片地址。'));
     $form->addInput($defaultCovers);
@@ -199,7 +199,7 @@ function themeConfig($form)
 
     /* 社交 */
     $socialLinks = new Typecho_Widget_Helper_Form_Element_Textarea(
-        'socialLinks', null, '[]', _t('社交链接'), _t('使用下方的列表编辑器添加平台、链接和图标；平台名称使用固定枚举，图标可留空，主题会根据平台自动匹配。')
+        'socialLinks', null, '[]', _t('社交链接'), _t('使用下方的列表编辑器添加平台和链接；平台名称使用固定枚举，图标会根据平台自动匹配。')
     );
     $socialLinks->addRule('curve_validate_social_links_json', _t('社交链接配置格式不正确，请检查名称和链接。'));
     $form->addInput($socialLinks);
@@ -218,41 +218,41 @@ function themeConfig($form)
     $form->addInput($sidebarSocialLinks);
 
     /* 文章与摘要 */
-    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('postSize', null, '8', _t('每页文章数'), _t('对应主题首页的分页数量。')));
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('postSize', null, '8', _t('每页文章数'), _t('控制首页及各类文章归档页的分页数量。')));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Radio(
         'fakeGptEnable', array('1' => _t('开启'), '0' => _t('关闭')), '1', _t('FakeGPT 开关'), _t('控制文章中的 FakeGPT 摘要卡片是否显示。')
     ));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Textarea(
         'fakeGptClickText', null, '你好，我是 FakeGPT：名字听起来很懂，实际上只负责把作者认真写好的摘要一个字一个字端上来。没有联网、没有偷看正文，也没有在后台煮咖啡；这段内容由作者亲自审核，放心食用。', _t('FakeGPT 点击文案'), _t('点击文章摘要卡片右上角的 FakeGPT 后显示的内容。')
     ));
-    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('reportUrl', null, '', _t('投诉反馈地址'), _t('投诉反馈没有内置模板，仅在填写地址后显示。')));
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('reportUrl', null, '', _t('投诉反馈地址'), _t('填写后在文章页显示“反馈与投诉”，并加入页脚服务链接；主题不内置反馈页面。')));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Text(
-        'rewardWechat', null, '', _t('微信收款码地址')
+        'rewardWechat', null, '', _t('微信收款码地址'), _t('填写图片地址后，在文章页赞赏弹窗中显示微信收款码。')
     ));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Text(
-        'rewardAlipay', null, '', _t('支付宝收款码地址')
+        'rewardAlipay', null, '', _t('支付宝收款码地址'), _t('填写图片地址后，在文章页赞赏弹窗中显示支付宝收款码。')
     ));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Radio(
         'travellingsEnable', array('1' => _t('开启'), '0' => _t('关闭')), '1', _t('开往按钮'), _t('控制页面右上角的“开往-友链接力”按钮是否显示。')
     ));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Radio(
-        'showToc', array('1' => _t('开启'), '0' => _t('关闭')), '1', _t('文章目录')
+        'showToc', array('1' => _t('开启'), '0' => _t('关闭')), '1', _t('文章目录'), _t('控制文章页侧栏目录卡片；文章没有二级或三级标题时会自动隐藏。')
     ));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Radio(
-        'showCopyright', array('1' => _t('开启'), '0' => _t('关闭')), '1', _t('文章版权卡片')
+        'showCopyright', array('1' => _t('开启'), '0' => _t('关闭')), '1', _t('文章版权卡片'), _t('控制文章页版权卡片的默认显示；单篇文章可通过“版权卡片”字段单独隐藏。')
     ));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Text(
-        'countdownName', null, '', _t('倒计时名称'), _t('例如：春节；留空则不显示。')
+        'countdownName', null, '', _t('倒计时名称'), _t('例如：春节；需同时填写倒计时日期，任一项留空则不显示。')
     ));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Text(
-        'countdownDate', null, '', _t('倒计时日期'), _t('格式：2026-01-01。')
+        'countdownDate', null, '', _t('倒计时日期'), _t('格式：2026-01-01；需同时填写倒计时名称，任一项留空则不显示。')
     ));
 
     /* 评论与文章关系 */
-    $form->addInput(new Typecho_Widget_Helper_Form_Element_Radio('commentEnable', array('1' => _t('开启'), '0' => _t('关闭')), '1', _t('评论开关')));
-    $form->addInput(new Typecho_Widget_Helper_Form_Element_Select('commentFormPosition', array('bottom' => _t('评论最后'), 'top' => _t('评论最前')), 'bottom', _t('评论框位置')));
-    $form->addInput(new Typecho_Widget_Helper_Form_Element_Textarea('commentPlaceholder', null, '友善交流，请遵守当地法律法规。', _t('评论框提示语')));
-    $form->addInput(new Typecho_Widget_Helper_Form_Element_Radio('relatedEnable', array('1' => _t('开启'), '0' => _t('关闭')), '1', _t('相关推荐')));
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Radio('commentEnable', array('1' => _t('开启'), '0' => _t('关闭')), '1', _t('评论开关'), _t('控制全站评论表单是否显示。')));
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Select('commentFormPosition', array('bottom' => _t('评论最后'), 'top' => _t('评论最前')), 'bottom', _t('评论框位置'), _t('控制评论输入框显示在评论列表之前或之后。')));
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Textarea('commentPlaceholder', null, '友善交流，请遵守当地法律法规。', _t('评论框提示语'), _t('显示在评论内容输入框中。')));
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Radio('relatedEnable', array('1' => _t('开启'), '0' => _t('关闭')), '1', _t('相关推荐'), _t('控制文章页相关推荐卡片是否显示。')));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Radio(
         'commentAuthorShowSensitive', array('1' => _t('显示'), '0' => _t('隐藏')), '0', _t('作者评论/回复显示 IP 和系统信息'), _t('关闭后，作者发布的评论和回复只显示时间，不公开 IP 归属地和系统信息。')
     ));
@@ -261,9 +261,9 @@ function themeConfig($form)
 /** 文章自定义字段。 */
 function themeFields($layout)
 {
-    $layout->addItem(new Typecho_Widget_Helper_Form_Element_Text('cover', null, '', _t('封面图地址'), _t('文章列表与文章顶部使用。')));
-    $layout->addItem(new Typecho_Widget_Helper_Form_Element_Textarea('description', null, '', _t('文章摘要'), _t('填写后用于文章列表，并在正文顶部以 FakeGPT 流式摘要展示；留空时列表由正文自动截取。')));
-    $layout->addItem(new Typecho_Widget_Helper_Form_Element_Radio('top', array('0' => _t('否'), '1' => _t('是')), '0', _t('置顶标记'), _t('仅显示置顶样式；置顶排序可配合 Typecho 置顶插件。')));
+    $layout->addItem(new Typecho_Widget_Helper_Form_Element_Text('cover', null, '', _t('封面图地址'), _t('用于文章列表卡片；文章页正文顶部不显示封面。')));
+    $layout->addItem(new Typecho_Widget_Helper_Form_Element_Textarea('description', null, '', _t('文章摘要'), _t('填写后用于文章列表；开启 FakeGPT 时也会在正文顶部以摘要卡片展示，留空时列表由正文自动截取。')));
+    $layout->addItem(new Typecho_Widget_Helper_Form_Element_Radio('top', array('0' => _t('否'), '1' => _t('是')), '0', _t('置顶标记'), _t('显示置顶样式，并让文章在首页和首页分类筛选中优先排序。')));
     $layout->addItem(new Typecho_Widget_Helper_Form_Element_Textarea('references', null, '', _t('参考资料'), _t('一行一个，格式：标题|链接。')));
     $layout->addItem(new Typecho_Widget_Helper_Form_Element_Radio('copyright', array('1' => _t('显示'), '0' => _t('隐藏')), '1', _t('版权卡片')));
     $views = new Typecho_Widget_Helper_Form_Element_Text('views', null, '0', _t('访问量'), _t('文章访问量，主题会在访问文章时自动累加。'));

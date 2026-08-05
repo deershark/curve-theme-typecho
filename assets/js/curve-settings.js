@@ -34,7 +34,7 @@
       id: "article",
       icon: "article",
       title: "文章与摘要",
-      description: "控制文章列表、目录、版权卡片和 FakeGPT 摘要。",
+      description: "控制文章列表分页、目录、版权卡片、相关推荐和 FakeGPT 摘要。",
       fields: ["postSize", "fakeGptEnable", "fakeGptClickText", "showToc", "showCopyright", "relatedEnable"]
     },
     {
