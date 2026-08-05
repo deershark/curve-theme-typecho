@@ -4489,12 +4489,16 @@
   > .post-meta {
     padding: 2rem 0 3rem 18px;
     width: 100%;
-    .meta {
+    > .meta {
       display: flex;
       flex-direction: row;
-      align-items: center;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: .5rem .75rem;
+      min-width: 0;
       .categories {
-        margin-right: 12px;
+        flex: 0 0 auto;
+        margin-right: 0;
         .cat-item {
           display: flex;
           flex-direction: row;
@@ -4518,10 +4522,20 @@
         }
       }
       .tags {
+        flex: 1 1 0;
+        min-width: 0;
         display: flex;
         flex-direction: row;
         align-items: center;
+        flex-wrap: nowrap;
+        gap: .25rem;
+        overflow-x: auto;
+        scrollbar-width: none;
+        &::-webkit-scrollbar {
+          display: none;
+        }
         .tag-item {
+          flex: 0 0 auto;
           display: flex;
           flex-direction: row;
           align-items: center;
@@ -4530,6 +4544,7 @@
           font-weight: bold;
           border-radius: 8px;
           opacity: 0.8;
+          white-space: nowrap;
           .iconfont {
             margin-right: 4px;
             opacity: 0.6;
@@ -4546,10 +4561,14 @@
       }
     }
     .title {
-      font-size: 2.2rem;
-      line-height: 1.2;
+      max-width: 100%;
+      font-size: clamp(1.7rem, 3vw, 2.2rem);
+      line-height: 1.3;
       color: var(--main-font-color);
       margin: 1.4rem 0;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .other-meta {
       display: flex;
@@ -4620,13 +4639,22 @@
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
+        gap: 1rem;
         margin: 2rem 0;
         opacity: 0.8;
         .all-tags {
+          flex: 1 1 auto;
+          min-width: 0;
           display: flex;
           flex-direction: row;
-          align-items: center;
+          align-items: flex-start;
+          flex-wrap: wrap;
+          gap: .45rem;
+          max-height: 9rem;
+          overflow-y: auto;
+          scrollbar-width: thin;
           .tag-item {
+            flex: 0 0 auto;
             display: flex;
             flex-direction: row;
             align-items: center;
@@ -4635,7 +4663,10 @@
             font-weight: bold;
             border-radius: 8px;
             background-color: var(--main-card-border);
-            margin-right: 12px;
+            margin: 0;
+            max-width: 100%;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
             .iconfont {
               margin-right: 4px;
               opacity: 0.6;
@@ -4698,9 +4729,9 @@
         }
       }
       .title {
-        font-size: 1.6rem;
+        font-size: clamp(1.5rem, 7vw, 1.8rem);
         text-align: center;
-        line-height: 40px;
+        line-height: 1.35;
       }
       .other-meta {
         justify-content: center;
@@ -4716,8 +4747,9 @@
           flex-direction: column;
           .all-tags {
             flex-wrap: wrap;
+            width: 100%;
             .tag-item {
-              margin-top: 12px;
+              margin-top: 0;
             }
           }
           .report {

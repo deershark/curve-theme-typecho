@@ -245,7 +245,11 @@ html.image .tags-cloud .all-tags::after {
 html {
   user-select: none;
   scroll-behavior: smooth;
+  scroll-padding-top: 76px;
   -webkit-text-size-adjust: 100%;
+}
+html.curve-initial-hash {
+  scroll-behavior: auto;
 }
 html.dark pre code .line span {
   color: var(--shiki-dark) !important;
@@ -5179,13 +5183,17 @@ a:hover {
   padding: 2rem 0 3rem 18px;
   width: 100%;
 }
-.post > .post-meta .meta {
+.post > .post-meta > .meta {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem 0.75rem;
+  min-width: 0;
 }
 .post > .post-meta .meta .categories {
-  margin-right: 12px;
+  flex: 0 0 auto;
+  margin-right: 0;
 }
 .post > .post-meta .meta .categories .cat-item {
   display: flex;
@@ -5209,11 +5217,21 @@ a:hover {
   color: var(--main-color);
 }
 .post > .post-meta .meta .tags {
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   flex-direction: row;
   align-items: center;
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.post > .post-meta .meta .tags::-webkit-scrollbar {
+  display: none;
 }
 .post > .post-meta .meta .tags .tag-item {
+  flex: 0 0 auto;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -5222,6 +5240,7 @@ a:hover {
   font-weight: bold;
   border-radius: 8px;
   opacity: 0.8;
+  white-space: nowrap;
 }
 .post > .post-meta .meta .tags .tag-item .iconfont {
   margin-right: 4px;
@@ -5236,10 +5255,14 @@ a:hover {
   color: var(--main-color);
 }
 .post > .post-meta .title {
-  font-size: 2.2rem;
-  line-height: 1.2;
+  max-width: 100%;
+  font-size: clamp(1.7rem, 3vw, 2.2rem);
+  line-height: 1.3;
   color: var(--main-font-color);
   margin: 1.4rem 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .post > .post-meta .other-meta {
   display: flex;
@@ -5307,15 +5330,24 @@ a:hover {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
   margin: 2rem 0;
   opacity: 0.8;
 }
 .post > .post-content .post-article .other-meta .all-tags {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  max-height: 9rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 .post > .post-content .post-article .other-meta .all-tags .tag-item {
+  flex: 0 0 auto;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -5324,7 +5356,10 @@ a:hover {
   font-weight: bold;
   border-radius: 8px;
   background-color: var(--main-card-border);
-  margin-right: 12px;
+  margin: 0;
+  max-width: 100%;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 .post > .post-content .post-article .other-meta .all-tags .tag-item .iconfont {
   margin-right: 4px;
@@ -5384,9 +5419,9 @@ a:hover {
     display: none;
   }
   .post > .post-meta .title {
-    font-size: 1.6rem;
+    font-size: clamp(1.5rem, 7vw, 1.8rem);
     text-align: center;
-    line-height: 40px;
+    line-height: 1.35;
   }
   .post > .post-meta .other-meta {
     justify-content: center;
@@ -5402,9 +5437,10 @@ a:hover {
   }
   .post > .post-content .post-article .other-meta .all-tags {
     flex-wrap: wrap;
+    width: 100%;
   }
   .post > .post-content .post-article .other-meta .all-tags .tag-item {
-    margin-top: 12px;
+    margin-top: 0;
   }
   .post > .post-content .post-article .other-meta .report {
     margin-top: 20px;
@@ -6436,6 +6472,21 @@ button.s-card,
 
 .markdown-main-style {
   user-select: text;
+}
+
+.markdown-main-style h1[id],
+.markdown-main-style h2[id],
+.markdown-main-style h3[id],
+.markdown-main-style h4[id],
+.markdown-main-style h5[id],
+.markdown-main-style h6[id],
+#main-comment,
+.comment-item__body[id] {
+  scroll-margin-top: 76px;
+}
+
+:target {
+  scroll-margin-top: 76px;
 }
 
 .link > .cat-or-tag {

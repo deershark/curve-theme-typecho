@@ -508,6 +508,15 @@ button.s-card,
   margin-top: 0;
 }
 .markdown-main-style { user-select: text; }
+.markdown-main-style h1[id],
+.markdown-main-style h2[id],
+.markdown-main-style h3[id],
+.markdown-main-style h4[id],
+.markdown-main-style h5[id],
+.markdown-main-style h6[id],
+#main-comment,
+.comment-item__body[id] { scroll-margin-top: 76px; }
+:target { scroll-margin-top: 76px; }
 .link > .cat-or-tag { min-height: auto; }
 .link-config-errors,
 .link-config-empty,

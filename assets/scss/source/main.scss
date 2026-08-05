@@ -116,6 +116,7 @@ html {
 html {
   user-select: none;
   scroll-behavior: smooth;
+  scroll-padding-top: 76px;
   -webkit-text-size-adjust: 100%;
   // 特殊情况
   &.dark {
@@ -135,6 +136,7 @@ html {
     filter: grayscale(100%);
   }
 }
+html.curve-initial-hash { scroll-behavior: auto; }
 
 body {
   margin: 0;

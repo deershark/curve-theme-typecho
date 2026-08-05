@@ -14,6 +14,7 @@
             try { saved = window.localStorage.getItem("curve-typecho-font"); } catch (error) {}
             var font = allowed.indexOf(saved) !== -1 ? saved : root.getAttribute("data-curve-default-font");
             if (allowed.indexOf(font) !== -1) root.classList.add(font);
+            if (window.location.hash) root.classList.add("curve-initial-hash");
         }());
     </script>
     <link rel="stylesheet" href="<?php $this->options->themeUrl('assets/css/curve.css'); ?>?v=<?php echo (int) @filemtime(__DIR__ . '/assets/css/curve.css'); ?>">

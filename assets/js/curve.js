@@ -739,16 +739,31 @@
       if (!heading.id) heading.id = "heading-" + (index + 1);
       var item = document.createElement("span");
       item.id = "toc-" + heading.id;
+      item._curveTocHeading = heading;
       item.className = "toc-item " + heading.tagName;
       item.textContent = heading.textContent.replace(/[\u200B]/g, "").trim();
-      item.addEventListener("click", function () { heading.scrollIntoView({ behavior: "smooth", block: "start" }); });
+      item.addEventListener("click", function () { scrollToAnchor(heading, true); });
       toc.appendChild(item);
     });
     var headings = tocHeadings;
     function activeToc() {
-      var current = null;
-      Array.prototype.forEach.call(headings, function (heading) { if (heading.getBoundingClientRect().top < 150) current = heading; });
-      Array.prototype.forEach.call(toc.querySelectorAll(".toc-item"), function (item) { item.classList.toggle("active", current && item.id === "toc-" + current.id); });
+      var activeLine = anchorOffset() + 24;
+      var current = headings.length ? headings[0] : null;
+      Array.prototype.forEach.call(headings, function (heading) {
+        if (heading.getBoundingClientRect().top <= activeLine) current = heading;
+      });
+      var activeItem = null;
+      Array.prototype.forEach.call(toc.querySelectorAll(".toc-item"), function (item) {
+        var isActive = !!current && item._curveTocHeading === current;
+        item.classList.toggle("active", isActive);
+        if (isActive) activeItem = item;
+      });
+      if (activeItem) {
+        var listRect = toc.getBoundingClientRect();
+        var itemRect = activeItem.getBoundingClientRect();
+        var indicatorTop = itemRect.top - listRect.top + itemRect.height / 2 - 18;
+        toc.style.setProperty("--height", Math.max(0, indicatorTop) + "px");
+      }
     }
     window.addEventListener("scroll", activeToc, { passive: true });
     activeToc();
@@ -1056,6 +1071,7 @@
   var loadingTipTimer;
   var loadingHideTimer;
   var loadingStartedAt = 0;
+  var initialHash = !!window.location.hash;
   function startLoading() {
     if (!loading) return;
     window.clearTimeout(loadingHideTimer);
@@ -1076,6 +1092,16 @@
   function finishLoading() {
     if (!loading) return;
     window.clearTimeout(loadingTipTimer);
+    if (initialHash) {
+      loading.hidden = true;
+      loading.classList.remove("fade-enter-active", "fade-enter-from", "fade-leave-active", "fade-leave-to");
+      if (app) { app.classList.remove("is-loading"); app.setAttribute("aria-busy", "false"); }
+      syncLeftMenuWithFooter();
+      window.requestAnimationFrame(syncHomeTypeBarFloat);
+      scrollToHash(false);
+      scheduleHashScroll(false);
+      return;
+    }
     loading.classList.remove("fade-enter-active", "fade-enter-from");
     loading.classList.add("fade-leave-active", "fade-leave-to");
     loadingHideTimer = window.setTimeout(function () {
@@ -1084,6 +1110,7 @@
       if (app) { app.classList.remove("is-loading"); app.setAttribute("aria-busy", "false"); }
       syncLeftMenuWithFooter();
       window.requestAnimationFrame(syncHomeTypeBarFloat);
+      if (window.location.hash) scheduleHashScroll(false);
     }, 300);
   }
   function isInternalNavigation(link, event) {
@@ -1097,9 +1124,62 @@
     if (url.origin !== window.location.origin || url.protocol === "mailto:" || url.protocol === "tel:") return false;
     return url.pathname !== window.location.pathname || url.search !== window.location.search;
   }
+  function findAnchorTarget(hash) {
+    if (!hash) return null;
+    var rawId = hash.charAt(0) === "#" ? hash.slice(1) : hash;
+    var id;
+    try { id = decodeURIComponent(rawId); } catch (error) { id = rawId; }
+    if (!id) return null;
+    var target = document.getElementById(id);
+    if (target) return target;
+    var namedTargets = document.getElementsByName(id);
+    return namedTargets.length ? namedTargets[0] : null;
+  }
+  function sameDocumentHash(link) {
+    if (!link || !link.href) return null;
+    var url;
+    try { url = new URL(link.href, window.location.href); } catch (error) { return null; }
+    if (url.origin !== window.location.origin || url.pathname !== window.location.pathname || url.search !== window.location.search || !url.hash) return null;
+    return findAnchorTarget(url.hash);
+  }
+  function anchorOffset() {
+    var nav = document.querySelector(".main-header .main-nav");
+    var navRect = nav ? nav.getBoundingClientRect() : null;
+    var navBottom = navRect ? navRect.bottom : 60;
+    return Math.max(60, navBottom) + 16;
+  }
+  function scrollToAnchor(target, smooth) {
+    if (!target || (app && app.classList.contains("is-loading"))) return false;
+    var top = target.getBoundingClientRect().top + (window.pageYOffset || window.scrollY || 0) - anchorOffset();
+    top = Math.max(0, top);
+    /* `behavior: auto` still inherits html's smooth scrolling in browsers.
+     * Use the two-argument form for the settling corrections so repeated
+     * initial-hash fixes do not keep restarting the smooth animation. */
+    if (smooth) window.scrollTo({ top: top, behavior: "smooth" });
+    else window.scrollTo(0, top);
+    return true;
+  }
+  function scrollToHash(smooth) {
+    return scrollToAnchor(findAnchorTarget(window.location.hash), smooth);
+  }
+  function scheduleHashScroll(smooth) {
+    var attempts = 0;
+    var maxAttempts = smooth ? 1 : 10;
+    function tryScroll() {
+      scrollToHash(attempts === 0 ? smooth : false);
+      attempts++;
+      /* The browser may perform its own initial fragment scroll after the
+       * loading layer is removed. Re-apply the offset for a short settling
+       * window so that the fixed nav cannot cover the target. */
+      if (attempts < maxAttempts) window.setTimeout(tryScroll, 80);
+    }
+    window.requestAnimationFrame(function () {
+      window.requestAnimationFrame(tryScroll);
+    });
+  }
   function finishWhenReady() {
     var elapsed = Date.now() - loadingStartedAt;
-    var wait = Math.max(0, 350 - elapsed);
+    var wait = initialHash ? 0 : Math.max(0, 350 - elapsed);
     window.clearTimeout(loadingHideTimer);
     loadingHideTimer = window.setTimeout(finishLoading, wait);
   }
@@ -1145,13 +1225,7 @@
       return;
     }
     var link = event.target.closest && event.target.closest("a");
-    if (link && (link.getAttribute("href") === "#" || link.getAttribute("href") === "")) {
-      event.preventDefault();
-      return;
-    }
-    /* Typecho handles these links in their inline callbacks. Keep them out of
-     * the theme's page-loading navigation so reply/cancel never flashes or
-     * changes the URL before Typecho moves the form. */
+    /* Typecho handles reply/cancel links in their inline callbacks. */
     var typechoCommentLink = link && (
       link.id === "cancel-comment-reply-link" ||
       /TypechoComment\.(?:reply|cancelReply)\s*\(/.test(link.getAttribute("onclick") || "")
@@ -1160,7 +1234,27 @@
       event.preventDefault();
       return;
     }
+    if (link && (link.getAttribute("href") === "#" || link.getAttribute("href") === "")) {
+      event.preventDefault();
+      return;
+    }
+    var hashTarget = sameDocumentHash(link);
+    if (hashTarget) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      var hashUrl;
+      try { hashUrl = new URL(link.href, window.location.href); } catch (error) { hashUrl = null; }
+      if (hashUrl && window.history && window.history.pushState) {
+        window.history.pushState(null, "", hashUrl.pathname + hashUrl.search + hashUrl.hash);
+      } else if (hashUrl) {
+        window.location.hash = hashUrl.hash;
+      }
+      scrollToHash(true);
+      return;
+    }
     if (isInternalNavigation(link, event)) startLoading();
   }, true);
+  window.addEventListener("hashchange", function () { scheduleHashScroll(true); });
+  window.addEventListener("popstate", function () { scheduleHashScroll(true); });
   window.addEventListener("beforeunload", function () { startLoading(); });
 }());

@@ -1149,6 +1149,7 @@ function curve_render_markdown($content)
     $codeLines = array();
     $inMath = false;
     $mathLines = array();
+    $headingIds = array();
 
     $flushParagraph = function () use (&$html, &$paragraph) {
         if (!empty($paragraph)) {
@@ -1249,7 +1250,13 @@ function curve_render_markdown($content)
             $closeList();
             $level = strlen($match[1]);
             $text = trim($match[2]);
-            $id = 'heading-' . substr(sha1($text), 0, 8);
+            $baseId = 'heading-' . substr(sha1($text), 0, 8);
+            $id = $baseId;
+            $suffix = 2;
+            while (isset($headingIds[$id])) {
+                $id = $baseId . '-' . $suffix++;
+            }
+            $headingIds[$id] = true;
             $html .= '<h' . $level . ' id="' . curve_esc($id) . '">' . curve_markdown_inline($text) . '</h' . $level . '>';
             continue;
         }
