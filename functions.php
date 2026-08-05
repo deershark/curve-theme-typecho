@@ -135,6 +135,15 @@ function themeConfig($form)
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('siteAuthorLink', null, '', _t('博主链接'), _t('可填写个人主页、博客或社交主页。')));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('siteAuthorEmail', null, '', _t('博主邮箱'), _t('用于没有单独配置 Email 链接时生成默认社交入口。')));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Textarea('intro', null, '记录值得分享的技术、想法与生活。', _t('站点简介'), _t('显示在首页侧栏和页脚。')));
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Select(
+        'homeSubtitleMode', array('custom' => _t('自定义文本'), 'hitokoto' => _t('一言')), 'custom', _t('首页副标题来源'), _t('控制“你好，欢迎来到……”下面的文本；选择一言后才会请求一言接口。')
+    ));
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text(
+        'homeSubtitle', null, '记录值得分享的技术、想法与生活。', _t('首页副标题文本'), _t('选择“自定义文本”时显示。')
+    ));
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text(
+        'sidebarAuthorDescription', null, '分享技术生活', _t('侧栏作者简介'), _t('显示在右侧时钟卡片的作者名称下方。')
+    ));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('logoUrl', null, '', _t('Logo 地址'), _t('留空时显示主题默认 Logo；可填写媒体库或外部图片地址。')));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('recordNumber', null, '', _t('备案号'), _t('留空则不显示备案号。')));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('since', null, '', _t('建站日期'), _t('格式：2020-07-28；用于页脚运行天数。')));

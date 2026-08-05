@@ -805,9 +805,9 @@
   var copyLink = document.querySelector("[data-copy-link]");
   if (copyLink) copyLink.addEventListener("click", function () { if (navigator.clipboard) navigator.clipboard.writeText(window.location.href).then(function () { message("本页地址已复制"); }); });
 
-  var bannerText = document.querySelector(".banner .subtitle .text");
-  if (bannerText) {
-    window.setTimeout(function () { fetch("https://v1.hitokoto.cn").then(function (response) { return response.json(); }).then(function (data) { if (data && data.hitokoto) bannerText.textContent = data.hitokoto; }).catch(function () {}); }, 2000);
+  var bannerText = document.querySelector("[data-home-subtitle]");
+  if (bannerText && bannerText.getAttribute("data-home-subtitle-mode") === "hitokoto") {
+    window.setTimeout(function () { fetch("https://v1.hitokoto.cn").then(function (response) { return response.json(); }).then(function (data) { if (data && data.hitokoto) bannerText.textContent = data.hitokoto; }).catch(function () { bannerText.textContent = "一言暂时不可用"; }); }, 2000);
   }
 
   var imageViewer = document.querySelector("[data-image-viewer]");

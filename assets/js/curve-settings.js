@@ -7,7 +7,7 @@
       icon: "contacts",
       title: "站点基础",
       description: "设置站点身份、简介和基本信息。",
-      fields: ["siteAuthorName", "siteAuthorLink", "siteAuthorEmail", "intro", "logoUrl", "recordNumber", "since"]
+      fields: ["siteAuthorName", "siteAuthorLink", "siteAuthorEmail", "intro", "homeSubtitleMode", "homeSubtitle", "sidebarAuthorDescription", "logoUrl", "recordNumber", "since"]
     },
     {
       id: "appearance",
@@ -791,6 +791,23 @@
     sync();
   }
 
+  function bindHomeSubtitleVisibility(form) {
+    var homeSubtitleMode = findInput(form, "homeSubtitleMode");
+    var homeSubtitle = findInput(form, "homeSubtitle");
+    if (!homeSubtitleMode || !homeSubtitle) return;
+    var row = findFieldRow(homeSubtitle, form);
+    if (!row) return;
+
+    function sync() {
+      var visible = homeSubtitleMode.value === "custom";
+      row.hidden = !visible;
+      row.style.display = visible ? "" : "none";
+    }
+    homeSubtitleMode.addEventListener("change", sync);
+    homeSubtitleMode.addEventListener("input", sync);
+    sync();
+  }
+
   function getConfigFieldNames() {
     var names = [];
     groups.forEach(function (group) {
@@ -1132,6 +1149,7 @@
 
     var configTransfer = buildLayout(form);
     bindDefaultBackgroundVisibility(form);
+    bindHomeSubtitleVisibility(form);
     renderCoverEditor(form);
     renderMenuEditor(form);
     renderSocialEditor(form);
