@@ -4,9 +4,9 @@
 
 一个简洁、现代、可配置的 Typecho 主题。
 
-[![Check theme](https://github.com/deershark/curve-theme-typecho/actions/workflows/check.yml/badge.svg)](https://github.com/deershark/curve-theme-typecho/actions/workflows/check.yml)
-[![Latest Release](https://img.shields.io/github/v/release/deershark/curve-theme-typecho?display_name=tag&sort=semver)](https://github.com/deershark/curve-theme-typecho/releases)
-[![License](https://img.shields.io/github/license/deershark/curve-theme-typecho)](LICENSE)
+[![Check theme](https://github.com/deershark/typecho-theme-curve/actions/workflows/check.yml/badge.svg)](https://github.com/deershark/typecho-theme-curve/actions/workflows/check.yml)
+[![Latest Release](https://img.shields.io/github/v/release/deershark/typecho-theme-curve?display_name=tag&sort=semver)](https://github.com/deershark/typecho-theme-curve/releases)
+[![License](https://img.shields.io/github/license/deershark/typecho-theme-curve)](LICENSE)
 
 </div>
 
@@ -31,7 +31,7 @@ Curve for Typecho 是将 [imsyy/vitepress-theme-curve](https://github.com/imsyy/
 
 ### 下载发布包
 
-1. 前往 [Releases](https://github.com/deershark/curve-theme-typecho/releases) 下载最新的 `curve-theme-typecho-*.zip`。
+1. 前往 [Releases](https://github.com/deershark/typecho-theme-curve/releases) 下载最新的 `typecho-theme-curve-*.zip`。
 2. 将压缩包解压到 Typecho 的 `usr/themes/` 目录。压缩包内已经包含 `curve` 主题目录，不需要再次重命名。
 3. 在 Typecho 后台进入「控制台 → 外观」，启用 Curve。
 4. 进入「外观 → 设置外观」，按需完成主题配置。
@@ -40,7 +40,7 @@ Curve for Typecho 是将 [imsyy/vitepress-theme-curve](https://github.com/imsyy/
 
 ```sh
 cd /path/to/typecho/usr/themes
-git clone https://github.com/deershark/curve-theme-typecho.git curve
+git clone https://github.com/deershark/typecho-theme-curve.git curve
 ```
 
 然后在 Typecho 后台启用 Curve 即可。

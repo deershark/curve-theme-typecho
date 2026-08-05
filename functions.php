@@ -5,7 +5,7 @@
  * @package Curve
  * @author 鹿形鱼
  * @version 0.1.0
- * @link https://github.com/deershark/curve-theme-typecho
+ * @link https://github.com/deershark/typecho-theme-curve
  */
 
 if (!defined('__TYPECHO_ROOT_DIR__')) {

@@ -120,7 +120,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          archive="curve-theme-typecho-${TAG}.zip"
+          archive="typecho-theme-curve-${TAG}.zip"
           git archive --format=zip --prefix=curve/ "$RELEASE_SHA" -o "$archive"
           sha256sum "$archive" > "${archive}.sha256"
 
