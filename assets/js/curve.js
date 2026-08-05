@@ -548,8 +548,14 @@
 
   var background = document.querySelector("[data-background]");
   var backgroundCover = background && background.querySelector("[data-background-cover]");
-  var backgroundType = localStorage.getItem(key + "background") || "patterns";
-  var backgroundUrl = localStorage.getItem(key + "background-url") || "";
+  var defaultBackground = html.getAttribute("data-curve-default-background");
+  if (["close", "patterns", "image"].indexOf(defaultBackground) === -1) defaultBackground = "patterns";
+  var defaultBackgroundUrl = html.getAttribute("data-curve-default-background-url") || "";
+  var backgroundUrlConfigurable = html.getAttribute("data-curve-background-url-configurable") !== "0";
+  var savedBackground = localStorage.getItem(key + "background");
+  var backgroundType = ["close", "patterns", "image"].indexOf(savedBackground) !== -1 ? savedBackground : defaultBackground;
+  var savedBackgroundUrl = localStorage.getItem(key + "background-url") || "";
+  var backgroundUrl = backgroundUrlConfigurable ? savedBackgroundUrl : defaultBackgroundUrl;
   var infoPosition = localStorage.getItem(key + "info-position") || "normal";
   function applyBackground(type, url) {
     backgroundType = type;
@@ -951,7 +957,7 @@
     Array.prototype.forEach.call(document.querySelectorAll("[data-setting-background]"), function (item) { item.classList.toggle("choose", item.dataset.settingBackground === backgroundType); });
     Array.prototype.forEach.call(document.querySelectorAll("[data-setting-info]"), function (item) { item.classList.toggle("choose", item.dataset.settingInfo === infoPosition); });
     var backgroundRow = document.querySelector("[data-background-url-row]");
-    if (backgroundRow) backgroundRow.hidden = backgroundType !== "image";
+    if (backgroundRow) backgroundRow.hidden = !backgroundUrlConfigurable || backgroundType !== "image";
   }
   Array.prototype.forEach.call(document.querySelectorAll("[data-setting-theme]"), function (item) { item.addEventListener("click", function () { setThemeMode(item.dataset.settingTheme, true); syncSettingChoices(); }); });
   var defaultFont = html.getAttribute("data-curve-default-font");

@@ -15,6 +15,15 @@ function curve_option($options, $name, $default = '')
     return $value === '' ? $default : $value;
 }
 
+/** 校验主题设置中的背景图片地址。 */
+function curve_validate_background_url($value)
+{
+    $value = trim((string) $value);
+    if ($value === '') return true;
+    return preg_match('/^(?:https?:\/\/|\/)/i', $value) === 1
+        && preg_match('/[\s\'"<>]/u', $value) !== 1;
+}
+
 /** 主题支持的前台字体标识。 */
 function curve_theme_font_ids()
 {
@@ -33,6 +42,28 @@ function curve_theme_default_banner($options)
 {
     $banner = curve_option($options, 'defaultBanner', 'half');
     return in_array($banner, array('half', 'full'), true) ? $banner : 'half';
+}
+
+/** 读取并校验主题设置中的默认背景类型。 */
+function curve_theme_default_background($options)
+{
+    $background = curve_option($options, 'defaultBackground', 'patterns');
+    if (!in_array($background, array('close', 'patterns', 'image'), true)) $background = 'patterns';
+    if ($background === 'image' && curve_theme_background_url($options) === '') return 'patterns';
+    return $background;
+}
+
+/** 读取主题设置中的默认背景图片地址。 */
+function curve_theme_background_url($options)
+{
+    $url = curve_option($options, 'defaultBackgroundUrl', '');
+    return curve_validate_background_url($url) ? $url : '';
+}
+
+/** 仅在默认背景确实为自定义图片时返回图片地址。 */
+function curve_theme_default_background_url($options)
+{
+    return curve_theme_default_background($options) === 'image' ? curve_theme_background_url($options) : '';
 }
 
 /** 读取并校验主题设置中的首页标题字体。 */

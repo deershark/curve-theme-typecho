@@ -162,6 +162,14 @@ function themeConfig($form)
         'defaultBanner', array('half' => _t('半屏'), 'full' => _t('全屏')), 'half', _t('Banner 高度默认值'), _t('仅作为访客首次访问时的默认高度；访客在前台个性化配置中选择后，以浏览器保存的选择为准。'))
     );
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Select(
+        'defaultBackground', array('close' => _t('无'), 'patterns' => _t('使用纹理'), 'image' => _t('自定义图片')), 'patterns', _t('背景默认值'), _t('仅作为访客首次访问时的默认背景；选择自定义图片时，请填写下面的图片地址。'))
+    );
+    $defaultBackgroundUrl = new Typecho_Widget_Helper_Form_Element_Text(
+        'defaultBackgroundUrl', null, '', _t('默认背景图片地址'), _t('支持 http(s) 地址或站内绝对路径；仅在背景默认值为“自定义图片”时生效。')
+    );
+    $defaultBackgroundUrl->addRule('curve_validate_background_url', _t('背景图片地址必须是 http(s) 地址或站内绝对路径。'));
+    $form->addInput($defaultBackgroundUrl);
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Select(
         'fontSource', array('local' => _t('本地字体'), 'cdn' => _t('CDN（cdn.jsdmirror.com）')), 'cdn', _t('字体源'), _t('本地模式使用主题目录中的全部字体文件，不依赖 cdn.jsdmirror.com；CDN 模式使用对应的远程字体。'))
     );
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Select(

@@ -1,7 +1,7 @@
 <?php if (!defined('__TYPECHO_ROOT_DIR__')) { exit; } ?>
-<?php $curveDefaultFont = curve_theme_default_font($this->options); $curveDefaultBanner = curve_theme_default_banner($this->options); ?>
+<?php $curveDefaultFont = curve_theme_default_font($this->options); $curveDefaultBanner = curve_theme_default_banner($this->options); $curveDefaultBackground = curve_theme_default_background($this->options); $curveDefaultBackgroundUrl = curve_theme_default_background_url($this->options); $curveBackgroundUrlConfigurable = $curveDefaultBackground === 'image' ? '0' : '1'; ?>
 <!doctype html>
-<html lang="zh-CN" class="light" data-curve-default-font="<?php echo curve_esc($curveDefaultFont); ?>" data-curve-default-banner="<?php echo curve_esc($curveDefaultBanner); ?>">
+<html lang="zh-CN" class="light" data-curve-default-font="<?php echo curve_esc($curveDefaultFont); ?>" data-curve-default-banner="<?php echo curve_esc($curveDefaultBanner); ?>" data-curve-default-background="<?php echo curve_esc($curveDefaultBackground); ?>" data-curve-default-background-url="<?php echo curve_esc($curveDefaultBackgroundUrl); ?>" data-curve-background-url-configurable="<?php echo $curveBackgroundUrlConfigurable; ?>">
 <head>
     <meta charset="<?php $this->options->charset(); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -47,7 +47,7 @@ foreach ($moreMenu as $moreItem) {
 }
 ?>
 <div id="app" class="is-loading" aria-busy="true">
-    <div class="background patterns light" data-background="patterns" aria-hidden="true">
+    <div class="background <?php echo curve_esc($curveDefaultBackground); ?> light" data-background="<?php echo curve_esc($curveDefaultBackground); ?>"<?php echo $curveDefaultBackground === 'close' ? ' hidden' : ''; ?> aria-hidden="true">
         <img id="background-cover" class="cover" data-background-cover alt="background" hidden>
     </div>
     <div class="loading fade-enter-from" data-loading>

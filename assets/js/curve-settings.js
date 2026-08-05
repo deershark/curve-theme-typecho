@@ -14,7 +14,7 @@
       icon: "style",
       title: "外观与封面",
       description: "调整主题色、字体、首页 Banner 和文章卡片布局。",
-      fields: ["accentColor", "homeTitleFont", "defaultFont", "defaultBanner", "fontSource", "coverLayout", "defaultCovers"]
+      fields: ["accentColor", "homeTitleFont", "defaultFont", "defaultBanner", "defaultBackground", "defaultBackgroundUrl", "fontSource", "coverLayout", "defaultCovers"]
     },
     {
       id: "navigation",
@@ -769,6 +769,26 @@
       postSize.min = "1";
       postSize.max = "100";
     }
+
+  }
+
+  function bindDefaultBackgroundVisibility(form) {
+    var defaultBackground = findInput(form, "defaultBackground");
+    var defaultBackgroundUrl = findInput(form, "defaultBackgroundUrl");
+    if (!defaultBackground || !defaultBackgroundUrl) return;
+    defaultBackgroundUrl.type = "url";
+    defaultBackgroundUrl.setAttribute("autocomplete", "off");
+    var row = findFieldRow(defaultBackgroundUrl, form);
+    if (!row) return;
+
+    function sync() {
+      var visible = defaultBackground.value === "image";
+      row.hidden = !visible;
+      row.style.display = visible ? "" : "none";
+    }
+    defaultBackground.addEventListener("change", sync);
+    defaultBackground.addEventListener("input", sync);
+    sync();
   }
 
   function getConfigFieldNames() {
@@ -894,7 +914,10 @@
       var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
       var link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = "curve-theme-config-" + new Date().toISOString().slice(0, 10) + ".json";
+      var now = new Date();
+      function pad(value) { return String(value).padStart(2, "0"); }
+      var timestamp = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate()) + "-" + pad(now.getHours()) + "-" + pad(now.getMinutes()) + "-" + pad(now.getSeconds());
+      link.download = "curve-theme-config-" + timestamp + ".json";
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -1108,6 +1131,7 @@
     form.dataset.curveSettingsReady = "1";
 
     var configTransfer = buildLayout(form);
+    bindDefaultBackgroundVisibility(form);
     renderCoverEditor(form);
     renderMenuEditor(form);
     renderSocialEditor(form);

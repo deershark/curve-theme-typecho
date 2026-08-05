@@ -2471,7 +2471,7 @@ a:hover {
   cursor: pointer;
   overflow: hidden;
   min-height: 12.5rem;
-  height: auto;
+  height: 12.5rem;
 }
 .post-lists .post-item .post-cover {
   flex: 0 0 35%;
@@ -2490,6 +2490,7 @@ a:hover {
 }
 .post-lists .post-item .post-content {
   flex: 1;
+  min-width: 0;
   padding: 1.6rem 2rem;
   display: flex;
   flex-direction: column;
@@ -2548,19 +2549,26 @@ a:hover {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
+  min-width: 0;
   color: var(--main-font-second-color);
 }
 .post-lists .post-item .post-content .post-meta .post-tags {
   display: flex;
-  flex-wrap: wrap;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: calc(100% - 6rem);
+  flex-wrap: nowrap;
   opacity: 0.8;
   margin-right: 20px;
   overflow: hidden;
+  white-space: nowrap;
+  mask: linear-gradient(90deg, #fff 0, #fff 90%, hsla(0, 0%, 100%, 0.6) 95%, hsla(0, 0%, 100%, 0) 100%);
 }
 .post-lists .post-item .post-content .post-meta .post-tags .tags-name {
   display: flex;
   flex-direction: row;
   align-items: center;
+  flex: 0 0 auto;
   margin-right: 12px;
   white-space: nowrap;
   transition: color 0.3s;
