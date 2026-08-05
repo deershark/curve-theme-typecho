@@ -1306,50 +1306,6 @@ function curve_reading_time($post)
     return max(1, (int) ceil($count / 450));
 }
 
-/** 返回主题阅读量表名，并让表名保持在当前 Typecho 数据库前缀下。 */
-function curve_views_table_name($db)
-{
-    return $db->getPrefix() . 'curve_views';
-}
-
-/** 引用自建表名，避免数据库前缀被当成 SQL 片段。 */
-function curve_views_quote_table($db, $table)
-{
-    if (method_exists($db, 'quoteIdentifier')) {
-        return $db->quoteIdentifier($table);
-    }
-    $adapterName = method_exists($db, 'getAdapterName') ? strtolower((string) $db->getAdapterName()) : '';
-    if (strpos($adapterName, 'pgsql') !== false || strpos($adapterName, 'postgres') !== false) {
-        return '"' . str_replace('"', '""', $table) . '"';
-    }
-    return '`' . str_replace('`', '``', $table) . '`';
-}
-
-/** 首次使用时创建阅读量表；失败时不影响文章正常显示。 */
-function curve_views_ensure_table($db, $table)
-{
-    static $ready = array();
-    if (isset($ready[$table])) {
-        return true;
-    }
-
-    $quotedTable = curve_views_quote_table($db, $table);
-    $adapterName = method_exists($db, 'getAdapterName') ? strtolower((string) $db->getAdapterName()) : '';
-    if (strpos($adapterName, 'sqlite') !== false) {
-        $sql = 'CREATE TABLE IF NOT EXISTS ' . $quotedTable . ' (`cid` INTEGER PRIMARY KEY, `views` INTEGER NOT NULL DEFAULT 0)';
-    } else {
-        $sql = 'CREATE TABLE IF NOT EXISTS ' . $quotedTable . ' (`cid` INT(10) UNSIGNED NOT NULL, `views` BIGINT(20) UNSIGNED NOT NULL DEFAULT 0, PRIMARY KEY (`cid`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4';
-    }
-
-    try {
-        $db->query($sql, Typecho_Db::WRITE, Typecho_Db::SELECT);
-        $ready[$table] = true;
-        return true;
-    } catch (Exception $exception) {
-        return false;
-    }
-}
-
 /** 读取当前访客已经看过的文章 ID，限制数量避免 Cookie 无限增长。 */
 function curve_views_cookie_ids()
 {
@@ -1388,18 +1344,83 @@ function curve_views_mark_cookie($cid, $ids)
     $_COOKIE['curve_viewed_posts'] = $value;
 }
 
-/** 读取文章阅读量。 */
-function curve_views_read($db, $quotedTable, $cid)
+/** 从文章自定义字段读取访问量；返回 null 表示字段记录还不存在或读取失败。 */
+function curve_views_read($db, $cid)
 {
-    $row = $db->fetchRow('SELECT `views` FROM ' . $quotedTable . ' WHERE `cid` = ' . (int) $cid . ' LIMIT 1');
-    return is_array($row) && isset($row['views']) ? (int) $row['views'] : 0;
+    $select = $db->select('str_value')
+        ->from('table.fields')
+        ->where('cid = ?', (int) $cid)
+        ->where('name = ?', 'views')
+        ->limit(1);
+    $row = $db->fetchRow($select);
+    if (!is_array($row) || !array_key_exists('str_value', $row)) {
+        return null;
+    }
+    return max(0, (int) $row['str_value']);
+}
+
+/** 创建文章访问量字段，首次访问旧文章时也能直接开始计数。 */
+function curve_views_ensure_field($db, $cid)
+{
+    if (curve_views_read($db, $cid) !== null) {
+        return true;
+    }
+
+    try {
+        $insert = $db->insert('table.fields')->rows(array(
+            'cid' => (int) $cid,
+            'name' => 'views',
+            'type' => 'str',
+            'str_value' => '0'
+        ));
+        $db->query($insert, Typecho_Db::WRITE, Typecho_Db::INSERT);
+    } catch (Exception $exception) {
+        /* 并发请求可能已经插入字段，交给下面的读取确认。 */
+    }
+
+    return curve_views_read($db, $cid) !== null;
+}
+
+/** 原子增加文章自定义字段中的访问量。 */
+function curve_views_increment($db, $cid)
+{
+    if (!curve_views_ensure_field($db, $cid)) {
+        return null;
+    }
+
+    $table = $db->getPrefix() . 'fields';
+    if (method_exists($db, 'quoteIdentifier')) {
+        $table = $db->quoteIdentifier($table);
+    } else {
+        $adapterName = method_exists($db, 'getAdapterName') ? strtolower((string) $db->getAdapterName()) : '';
+        $table = (strpos($adapterName, 'pgsql') !== false || strpos($adapterName, 'postgres') !== false)
+            ? '"' . str_replace('"', '""', $table) . '"'
+            : '`' . str_replace('`', '``', $table) . '`';
+    }
+
+    $adapterName = method_exists($db, 'getAdapterName') ? strtolower((string) $db->getAdapterName()) : '';
+    if (strpos($adapterName, 'sqlite') !== false) {
+        $expression = "CAST(COALESCE(NULLIF(str_value, ''), '0') AS INTEGER) + 1";
+    } elseif (strpos($adapterName, 'pgsql') !== false || strpos($adapterName, 'postgres') !== false) {
+        $expression = "CAST(CAST(COALESCE(NULLIF(str_value, ''), '0') AS INTEGER) + 1 AS TEXT)";
+    } else {
+        $expression = "CAST(COALESCE(NULLIF(str_value, ''), '0') AS UNSIGNED) + 1";
+    }
+
+    try {
+        $sql = 'UPDATE ' . $table . ' SET str_value = ' . $expression . " WHERE cid = " . (int) $cid . " AND name = 'views'";
+        $db->query($sql, Typecho_Db::WRITE, Typecho_Db::UPDATE);
+        return curve_views_read($db, $cid);
+    } catch (Exception $exception) {
+        return null;
+    }
 }
 
 /** 记录一次文章访问并返回最新阅读量。 */
 function curve_record_view($post)
 {
     $cid = isset($post->cid) ? (int) $post->cid : 0;
-    $fallback = isset($post->views) ? (int) $post->views : 0;
+    $fallback = max(0, (int) curve_post_field($post, 'views', '0'));
     if ($cid <= 0) {
         return $fallback;
     }
@@ -1407,25 +1428,21 @@ function curve_record_view($post)
     $viewedIds = curve_views_cookie_ids();
     $alreadyViewed = in_array($cid, $viewedIds, true);
     $db = Typecho_Db::get();
-    $table = curve_views_table_name($db);
-    if (!curve_views_ensure_table($db, $table)) {
-        return $fallback;
+    $current = curve_views_read($db, $cid);
+    $current = $current === null ? $fallback : $current;
+    if ($alreadyViewed) {
+        return $current;
     }
 
-    $quotedTable = curve_views_quote_table($db, $table);
     try {
-        if (!$alreadyViewed) {
-            try {
-                $db->query('INSERT INTO ' . $quotedTable . ' (`cid`, `views`) VALUES (' . $cid . ', 1)', Typecho_Db::WRITE, Typecho_Db::INSERT);
-            } catch (Exception $exception) {
-                // 已有记录时插入会失败，此时使用数据库原子自增，避免并发访问丢计数。
-                $db->query('UPDATE ' . $quotedTable . ' SET `views` = `views` + 1 WHERE `cid` = ' . $cid, Typecho_Db::WRITE, Typecho_Db::UPDATE);
-            }
-            curve_views_mark_cookie($cid, $viewedIds);
+        $views = curve_views_increment($db, $cid);
+        if ($views === null) {
+            return $current;
         }
-        return curve_views_read($db, $quotedTable, $cid);
+        curve_views_mark_cookie($cid, $viewedIds);
+        return $views;
     } catch (Exception $exception) {
-        return $fallback;
+        return $current;
     }
 }
 

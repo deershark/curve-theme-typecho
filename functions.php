@@ -52,6 +52,12 @@ function curve_validate_json_array($value)
     return is_array($decoded);
 }
 
+/** 文章访问量必须是非负整数。 */
+function curve_validate_non_negative_integer($value)
+{
+    return preg_match('/^\d+$/', trim((string) $value)) === 1;
+}
+
 /** 主题设置中的社交链接 JSON。 */
 function curve_validate_social_links_json($value)
 {
@@ -220,12 +226,19 @@ function themeFields($layout)
     $layout->addItem(new Typecho_Widget_Helper_Form_Element_Radio('top', array('0' => _t('否'), '1' => _t('是')), '0', _t('置顶标记'), _t('仅显示置顶样式；置顶排序可配合 Typecho 置顶插件。')));
     $layout->addItem(new Typecho_Widget_Helper_Form_Element_Textarea('references', null, '', _t('参考资料'), _t('一行一个，格式：标题|链接。')));
     $layout->addItem(new Typecho_Widget_Helper_Form_Element_Radio('copyright', array('1' => _t('显示'), '0' => _t('隐藏')), '1', _t('版权卡片')));
+    $views = new Typecho_Widget_Helper_Form_Element_Text('views', null, '0', _t('访问量'), _t('文章访问量，主题会在访问文章时自动累加。'));
+    $views->addRule('curve_validate_non_negative_integer', _t('访问量必须是非负整数。'));
+    $layout->addItem($views);
 }
 
 /** 首页按 top 自定义字段排序，并保留 Typecho 原生分页查询流程。 */
 function curve_archive_query_top_first($archive, $select)
 {
-    if ($archive->is('index')) {
+    /* 首页分类筛选复用分类归档模板，但仍应沿用首页的置顶规则。 */
+    $isHomeCategoryFilter = $archive->is('category')
+        && isset($_GET['curve_home_filter'])
+        && (string) $_GET['curve_home_filter'] === '1';
+    if ($archive->is('index') || $isHomeCategoryFilter) {
         $select->cleanAttribute('order');
         $select->join(
             'table.fields',

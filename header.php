@@ -81,6 +81,7 @@ foreach ($moreMenu as $moreItem) {
                     <button class="menu-btn nav-btn" title="随机前往一篇文章" data-random-post><i class="iconfont icon-shuffle"></i></button>
                     <button class="menu-btn nav-btn" title="全站搜索" data-search-open><i class="iconfont icon-search"></i></button>
                     <button id="open-control" class="menu-btn nav-btn pc" title="打开中控台" data-control-open><i class="iconfont icon-dashboard"></i></button>
+                    <?php if ($this->user->hasLogin()): ?><a class="menu-btn nav-btn" title="进入后台" aria-label="进入后台" href="<?php $this->options->adminUrl(); ?>"><i class="iconfont icon-tools"></i></a><?php endif; ?>
                     <div class="to-top menu-btn hidden" title="返回顶部" data-scroll-top>
                         <div class="to-top-btn"><span class="num" data-scroll-percent>0</span><i class="iconfont icon-up"></i></div>
                     </div>

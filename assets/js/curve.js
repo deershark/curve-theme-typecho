@@ -352,6 +352,16 @@
     }
   }
 
+  function homeFilterRequestUrl(target) {
+    try {
+      var request = new URL(target, window.location.href);
+      request.searchParams.set("curve_home_filter", "1");
+      return request.pathname + request.search;
+    } catch (error) {
+      return target;
+    }
+  }
+
   function setHomeFilterChoice(home, target) {
     var links = home.querySelectorAll("[data-category-filter]");
     Array.prototype.forEach.call(links, function (item) {
@@ -396,7 +406,7 @@
       localLoading.classList.remove("is-leaving");
       window.requestAnimationFrame(function () { localLoading.classList.add("is-visible"); });
     }
-    fetch(target, { headers: { "X-Requested-With": "XMLHttpRequest" } })
+    fetch(homeFilterRequestUrl(target), { headers: { "X-Requested-With": "XMLHttpRequest" } })
       .then(function (response) {
         if (!response.ok) throw new Error("category request failed");
         return response.text();
