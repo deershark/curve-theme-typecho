@@ -954,9 +954,12 @@
     if (backgroundRow) backgroundRow.hidden = backgroundType !== "image";
   }
   Array.prototype.forEach.call(document.querySelectorAll("[data-setting-theme]"), function (item) { item.addEventListener("click", function () { setThemeMode(item.dataset.settingTheme, true); syncSettingChoices(); }); });
-  var fontFamily = ["hmos", "lxgw", "vivo", "xiaolai"].indexOf(localStorage.getItem(key + "font")) !== -1 ? localStorage.getItem(key + "font") : "vivo";
+  var defaultFont = html.getAttribute("data-curve-default-font");
+  if (["hmos", "lxgw", "vivo", "xiaolai"].indexOf(defaultFont) === -1) defaultFont = "vivo";
+  var savedFont = localStorage.getItem(key + "font");
+  var fontFamily = ["hmos", "lxgw", "vivo", "xiaolai"].indexOf(savedFont) !== -1 ? savedFont : defaultFont;
   function applyFontFamily(font) {
-    if (["hmos", "lxgw", "vivo", "xiaolai"].indexOf(font) === -1) font = "vivo";
+    if (["hmos", "lxgw", "vivo", "xiaolai"].indexOf(font) === -1) font = defaultFont;
     fontFamily = font;
     html.classList.remove("hmos", "lxgw", "vivo", "xiaolai");
     html.classList.add(fontFamily);
@@ -965,7 +968,6 @@
     window.requestAnimationFrame(syncHomeTypeBarFloat);
   }
   Array.prototype.forEach.call(document.querySelectorAll("[data-setting-font]"), function (item) { item.addEventListener("click", function () { applyFontFamily(item.dataset.settingFont); }); });
-  var savedFont = localStorage.getItem(key + "font");
   applyFontFamily(savedFont);
   syncSettingChoices();
   Array.prototype.forEach.call(document.querySelectorAll("[data-setting-background]"), function (item) { item.addEventListener("click", function () { applyBackground(item.dataset.settingBackground, backgroundUrl); syncSettingChoices(); }); });
@@ -987,15 +989,22 @@
   function applyFontSize() { fontSize = Math.max(14, Math.min(20, fontSize)); html.style.fontSize = fontSize + "px"; localStorage.setItem(key + "font-size", String(fontSize)); var value = document.querySelector("[data-font-value]"); if (value) value.textContent = fontSize; window.requestAnimationFrame(syncHomeTypeBarFloat); }
   applyFontSize();
   Array.prototype.forEach.call(document.querySelectorAll("[data-font-change]"), function (item) { item.addEventListener("click", function () { fontSize += Number(item.dataset.fontChange); applyFontSize(); }); });
-  Array.prototype.forEach.call(document.querySelectorAll("[data-banner]"), function (item) { item.addEventListener("click", function () { var banner = document.getElementById("main-banner"); if (banner) { banner.classList.remove("half", "full"); banner.classList.add(item.dataset.banner); } localStorage.setItem(key + "banner", item.dataset.banner); }); });
+  var defaultBanner = html.getAttribute("data-curve-default-banner");
+  if (["half", "full"].indexOf(defaultBanner) === -1) defaultBanner = "half";
   var bannerMode = localStorage.getItem(key + "banner");
+  if (["half", "full"].indexOf(bannerMode) === -1) bannerMode = defaultBanner;
+  function syncBannerChoices() {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-banner]"), function (item) { item.classList.toggle("choose", item.dataset.banner === bannerMode); });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("[data-banner]"), function (item) { item.addEventListener("click", function () { var banner = document.getElementById("main-banner"); bannerMode = item.dataset.banner; if (banner) { banner.classList.remove("half", "full"); banner.classList.add(bannerMode); } localStorage.setItem(key + "banner", bannerMode); syncBannerChoices(); }); });
   var mainBanner = document.getElementById("main-banner");
-  if (mainBanner && (bannerMode === "half" || bannerMode === "full")) { mainBanner.classList.remove("half", "full"); mainBanner.classList.add(bannerMode); }
+  if (mainBanner) { mainBanner.classList.remove("half", "full"); mainBanner.classList.add(bannerMode); }
   var bannerArrow = document.querySelector("[data-scroll-home]");
   function syncBannerArrow() {
     if (bannerArrow && mainBanner) bannerArrow.hidden = !mainBanner.classList.contains("full");
   }
   Array.prototype.forEach.call(document.querySelectorAll("[data-banner]"), function (item) { item.addEventListener("click", syncBannerArrow); });
+  syncBannerChoices();
   syncBannerArrow();
 
   var footer = document.getElementById("main-footer");

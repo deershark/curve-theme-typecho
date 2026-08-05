@@ -2,34 +2,6 @@
  * original component class names; these rules only cover Typecho-generated
  * markup that has no VitePress equivalent. */
 [hidden] { display: none !important; }
-@font-face {
-  font-family: "HarmonyOS Sans SC Web";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("https://cdn.jsdmirror.com/gh/SunsetMkt/HarmonyOS_Sans_SC_Webfont_Splitted@ec77417c5ea07f2eb0941252811d9787f3bc32b6/HarmonyOS_Sans_SC/HarmonyOS_SansSC_Regular.ttf") format("truetype");
-}
-@font-face {
-  font-family: "vivo Sans SC Web";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("https://cdn.jsdmirror.com/gh/DustJadeEcho/vivo-sans-webfont-splitted@718da45685bf27b5fe03779ebe44709f61c723f1/vivo_Sans/vivo_Sans/vivoSans-Bold.ttf") format("truetype");
-}
-@font-face {
-  font-family: "Xiaolai Welcome";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("https://cdn.jsdmirror.com/gh/kazukokawagawa/chiyupic@main/fonts/xiaolai/XiaolaiMonoSC-Regular.woff2") format("woff2");
-}
-@font-face {
-  font-family: "vivo Sans SC Web";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("https://cdn.jsdmirror.com/gh/DustJadeEcho/vivo-sans-webfont-splitted@718da45685bf27b5fe03779ebe44709f61c723f1/vivo_Sans/vivo_Sans/vivoSans-Bold.ttf") format("truetype");
-}
 .main-header { overflow: visible; }
 
 /* The source theme uses clickable divs. Typecho adds semantic buttons for
@@ -108,9 +80,9 @@ button.s-card,
   width: 100%;
   clear: both;
 }
-/* Keep the welcome line independent of the global font setting. */
+/* The backend can choose a dedicated font or make the welcome line follow the global font. */
 .banner .title {
-  font-family: "Xiaolai Welcome", "LXGW WenKai", "KaiTi", "STKaiti", cursive;
+  font-family: var(--curve-banner-title-font-family, "Xiaolai Welcome", "LXGW WenKai", sans-serif);
 }
 /* Copyright.vue and Footer.vue intentionally reuse the class name
  * `copyright`; Vue scoped CSS kept them separate in the original build.

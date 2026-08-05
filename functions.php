@@ -142,6 +142,29 @@ function themeConfig($form)
     /* 外观 */
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('accentColor', null, '', _t('强调色'), _t('留空使用主题原色；支持三位或六位十六进制颜色。')));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Select(
+        'homeTitleFont', array(
+            'xiaolai' => _t('小赖字体'),
+            'global' => _t('跟随全站字体'),
+            'hmos' => _t('HarmonyOS Sans'),
+            'vivo' => _t('vivo Sans'),
+            'lxgw' => _t('霞鹜文楷'),
+        ), 'xiaolai', _t('首页标题字体'), _t('控制首页“你好，欢迎来到……”标题的字体，不影响导航和文章正文。'))
+    );
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Select(
+        'defaultFont', array(
+            'vivo' => _t('vivo Sans'),
+            'hmos' => _t('HarmonyOS Sans'),
+            'lxgw' => _t('霞鹜文楷'),
+            'xiaolai' => _t('小赖字体'),
+        ), 'vivo', _t('全站字体默认值'), _t('仅作为访客首次访问时的默认字体；访客在前台个性化配置中选择后，以浏览器保存的选择为准。'))
+    );
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Select(
+        'defaultBanner', array('half' => _t('半屏'), 'full' => _t('全屏')), 'half', _t('Banner 高度默认值'), _t('仅作为访客首次访问时的默认高度；访客在前台个性化配置中选择后，以浏览器保存的选择为准。'))
+    );
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Select(
+        'fontSource', array('local' => _t('本地字体'), 'cdn' => _t('CDN（cdn.jsdmirror.com）')), 'cdn', _t('字体源'), _t('本地模式使用主题目录中的全部字体文件，不依赖 cdn.jsdmirror.com；CDN 模式使用对应的远程字体。'))
+    );
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Select(
         'coverLayout', array('left' => _t('封面在左'), 'right' => _t('封面在右'), 'both' => _t('交替排列'), 'grid' => _t('双列卡片')), 'both', _t('文章列表封面布局')
     ));
     $defaultCovers = new Typecho_Widget_Helper_Form_Element_Textarea(

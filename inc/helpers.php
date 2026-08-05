@@ -15,6 +15,100 @@ function curve_option($options, $name, $default = '')
     return $value === '' ? $default : $value;
 }
 
+/** 主题支持的前台字体标识。 */
+function curve_theme_font_ids()
+{
+    return array('hmos', 'lxgw', 'vivo', 'xiaolai');
+}
+
+/** 读取并校验主题设置中的全站字体默认值。 */
+function curve_theme_default_font($options)
+{
+    $font = curve_option($options, 'defaultFont', 'vivo');
+    return in_array($font, curve_theme_font_ids(), true) ? $font : 'vivo';
+}
+
+/** 读取并校验主题设置中的 Banner 默认高度。 */
+function curve_theme_default_banner($options)
+{
+    $banner = curve_option($options, 'defaultBanner', 'half');
+    return in_array($banner, array('half', 'full'), true) ? $banner : 'half';
+}
+
+/** 读取并校验主题设置中的首页标题字体。 */
+function curve_theme_home_title_font($options)
+{
+    $font = curve_option($options, 'homeTitleFont', 'xiaolai');
+    $allowed = array('global', 'hmos', 'lxgw', 'vivo', 'xiaolai');
+    return in_array($font, $allowed, true) ? $font : 'xiaolai';
+}
+
+/** 读取并校验主题设置中的字体源。 */
+function curve_theme_font_source($options)
+{
+    $source = curve_option($options, 'fontSource', 'cdn');
+    return in_array($source, array('local', 'cdn'), true) ? $source : 'cdn';
+}
+
+/** 将字体标识转换为 CSS 字体栈。 */
+function curve_theme_font_stack($font)
+{
+    $stacks = array(
+        'hmos' => '"HarmonyOS Sans SC Web", "HarmonyOS Sans SC", "HarmonyOS Sans", "HarmonyOS_Regular", "Microsoft YaHei", sans-serif',
+        'lxgw' => '"LXGW WenKai", sans-serif',
+        'vivo' => '"vivo Sans SC Web", "vivo Sans SC", "vivo Sans", "Microsoft YaHei", sans-serif',
+        'xiaolai' => '"Xiaolai Welcome", "LXGW WenKai", sans-serif',
+        'global' => 'var(--main-font-family)',
+    );
+    return isset($stacks[$font]) ? $stacks[$font] : $stacks['xiaolai'];
+}
+
+/** 获取主题资源的绝对地址。 */
+function curve_theme_asset_url($options, $path)
+{
+    ob_start();
+    $options->themeUrl($path);
+    return trim(ob_get_clean());
+}
+
+/** 生成可放入 CSS url() 的地址。 */
+function curve_theme_css_url($url)
+{
+    return str_replace(array('\\', '"', "\r", "\n"), array('\\\\', '\\"', '', ''), (string) $url);
+}
+
+/** 输出前台字体源和首页标题字体配置。 */
+function curve_theme_font_config_markup($options)
+{
+    $source = curve_theme_font_source($options);
+    $faces = array();
+    if ($source === 'local') {
+        $faces[] = array('HarmonyOS Sans SC Web', 400, curve_theme_asset_url($options, 'assets/fonts/harmonyos-sans-sc-regular.ttf'), 'truetype');
+        $faces[] = array('vivo Sans SC Web', 400, curve_theme_asset_url($options, 'assets/fonts/vivo-sans-sc-bold.ttf'), 'truetype');
+        $faces[] = array('vivo Sans SC Web', 700, curve_theme_asset_url($options, 'assets/fonts/vivo-sans-sc-bold.ttf'), 'truetype');
+        $faces[] = array('Xiaolai Welcome', 400, curve_theme_asset_url($options, 'assets/fonts/xiaolai-mono-sc-regular.woff2'), 'woff2');
+    } else {
+        $faces[] = array('HarmonyOS Sans SC Web', 400, 'https://cdn.jsdmirror.com/gh/SunsetMkt/HarmonyOS_Sans_SC_Webfont_Splitted@ec77417c5ea07f2eb0941252811d9787f3bc32b6/HarmonyOS_Sans_SC/HarmonyOS_SansSC_Regular.ttf', 'truetype');
+        $faces[] = array('vivo Sans SC Web', 400, 'https://cdn.jsdmirror.com/gh/DustJadeEcho/vivo-sans-webfont-splitted@718da45685bf27b5fe03779ebe44709f61c723f1/vivo_Sans/vivo_Sans/vivoSans-Bold.ttf', 'truetype');
+        $faces[] = array('vivo Sans SC Web', 700, 'https://cdn.jsdmirror.com/gh/DustJadeEcho/vivo-sans-webfont-splitted@718da45685bf27b5fe03779ebe44709f61c723f1/vivo_Sans/vivo_Sans/vivoSans-Bold.ttf', 'truetype');
+        $faces[] = array('Xiaolai Welcome', 400, 'https://cdn.jsdmirror.com/gh/kazukokawagawa/chiyupic@main/fonts/xiaolai/XiaolaiMonoSC-Regular.woff2', 'woff2');
+    }
+
+    $css = ':root{--curve-banner-title-font-family:' . curve_theme_font_stack(curve_theme_home_title_font($options)) . ';}';
+    foreach ($faces as $face) {
+        $css .= '@font-face{font-family:"' . $face[0] . '";font-style:normal;font-weight:' . (int) $face[1] . ';font-display:swap;src:url("' . curve_theme_css_url($face[2]) . '") format("' . $face[3] . '");}';
+    }
+
+    $markup = '<style id="curve-theme-font-config">' . $css . '</style>';
+    if ($source === 'cdn') {
+        $lxgwUrl = 'https://cdn.jsdmirror.com/gh/Minngc/lxgw-wenkai-webfonts@a676ddbd89161bdae9e1ace31d27cef0d5d6bb3d/lxgw-wenkai/bold/bold.css';
+    } else {
+        $lxgwUrl = curve_theme_asset_url($options, 'assets/fonts/lxgw-wenkai/bold.css');
+    }
+    $markup .= '<link rel="stylesheet" href="' . curve_esc($lxgwUrl) . '">';
+    return $markup;
+}
+
 /** 解码主题设置中的 JSON 数组。 */
 function curve_json_decode($value, $default = array())
 {

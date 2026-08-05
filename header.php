@@ -1,13 +1,24 @@
 <?php if (!defined('__TYPECHO_ROOT_DIR__')) { exit; } ?>
+<?php $curveDefaultFont = curve_theme_default_font($this->options); $curveDefaultBanner = curve_theme_default_banner($this->options); ?>
 <!doctype html>
-<html lang="zh-CN" class="light">
+<html lang="zh-CN" class="light" data-curve-default-font="<?php echo curve_esc($curveDefaultFont); ?>" data-curve-default-banner="<?php echo curve_esc($curveDefaultBanner); ?>">
 <head>
     <meta charset="<?php $this->options->charset(); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title><?php $this->archiveTitle('', '', ' - '); ?><?php $this->options->title(); ?></title>
+    <script>
+        (function () {
+            var root = document.documentElement;
+            var allowed = ["hmos", "lxgw", "vivo", "xiaolai"];
+            var saved = null;
+            try { saved = window.localStorage.getItem("curve-typecho-font"); } catch (error) {}
+            var font = allowed.indexOf(saved) !== -1 ? saved : root.getAttribute("data-curve-default-font");
+            if (allowed.indexOf(font) !== -1) root.classList.add(font);
+        }());
+    </script>
     <link rel="stylesheet" href="<?php $this->options->themeUrl('assets/css/curve.css'); ?>?v=<?php echo (int) @filemtime(__DIR__ . '/assets/css/curve.css'); ?>">
+    <?php echo curve_theme_font_config_markup($this->options); ?>
     <?php $accentColor = curve_accent_color($this->options); if ($accentColor !== ''): ?><style>:root{--main-color:<?php echo $accentColor; ?>;--main-color-bg:<?php echo $accentColor; ?>0d;}html.dark{--main-color:<?php echo $accentColor; ?>;--main-color-bg:<?php echo $accentColor; ?>23;}</style><?php endif; ?>
-    <link rel="stylesheet" href="https://cdn.jsdmirror.com/gh/Minngc/lxgw-wenkai-webfonts@a676ddbd89161bdae9e1ace31d27cef0d5d6bb3d/lxgw-wenkai/bold/bold.css">
     <link rel="stylesheet" href="https://cdn2.codesign.qq.com/icons/g5ZpEgx3z4VO6j2/latest/iconfont.css">
     <link rel="alternate" type="application/rss+xml" title="RSS" href="<?php $this->options->feedUrl(); ?>">
     <?php $this->header(); ?>

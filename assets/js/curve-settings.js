@@ -13,8 +13,8 @@
       id: "appearance",
       icon: "style",
       title: "外观与封面",
-      description: "调整主题色、文章卡片布局和默认封面。",
-      fields: ["accentColor", "coverLayout", "defaultCovers"]
+      description: "调整主题色、字体、首页 Banner 和文章卡片布局。",
+      fields: ["accentColor", "homeTitleFont", "defaultFont", "defaultBanner", "fontSource", "coverLayout", "defaultCovers"]
     },
     {
       id: "navigation",

@@ -1,9 +1,4 @@
 @charset "UTF-8";
-@font-face {
-  font-family: "Site Title";
-  font-display: swap;
-  src: url("../fonts/title.ttf");
-}
 html,
 body,
 #app {
@@ -203,13 +198,13 @@ html.hmos {
   --main-font-family: "HarmonyOS Sans SC Web", "HarmonyOS Sans SC", "HarmonyOS Sans", "HarmonyOS_Regular", "Microsoft YaHei", sans-serif;
 }
 html.lxgw {
-  --main-font-family: "LXGW WenKai", "KaiTi", "STKaiti", cursive;
+  --main-font-family: "LXGW WenKai", sans-serif;
 }
 html.vivo {
   --main-font-family: "vivo Sans SC Web", "vivo Sans SC", "vivo Sans", "Microsoft YaHei", sans-serif;
 }
 html.xiaolai {
-  --main-font-family: "Xiaolai Welcome", "LXGW WenKai", "KaiTi", "STKaiti", cursive;
+  --main-font-family: "Xiaolai Welcome", "LXGW WenKai", sans-serif;
 }
 html .iconfont {
   font-size: 1rem;
@@ -1669,7 +1664,6 @@ a:hover {
   animation: fade-up-opacity 0.8s 0.5s forwards;
 }
 .banner .title {
-  font-family: "Site Title";
   font-weight: bold;
   font-size: 2.75rem;
 }
@@ -5441,34 +5435,6 @@ a:hover {
   display: none !important;
 }
 
-@font-face {
-  font-family: "HarmonyOS Sans SC Web";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("https://cdn.jsdmirror.com/gh/SunsetMkt/HarmonyOS_Sans_SC_Webfont_Splitted@ec77417c5ea07f2eb0941252811d9787f3bc32b6/HarmonyOS_Sans_SC/HarmonyOS_SansSC_Regular.ttf") format("truetype");
-}
-@font-face {
-  font-family: "vivo Sans SC Web";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("https://cdn.jsdmirror.com/gh/DustJadeEcho/vivo-sans-webfont-splitted@718da45685bf27b5fe03779ebe44709f61c723f1/vivo_Sans/vivo_Sans/vivoSans-Bold.ttf") format("truetype");
-}
-@font-face {
-  font-family: "Xiaolai Welcome";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("https://cdn.jsdmirror.com/gh/kazukokawagawa/chiyupic@main/fonts/xiaolai/XiaolaiMonoSC-Regular.woff2") format("woff2");
-}
-@font-face {
-  font-family: "vivo Sans SC Web";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("https://cdn.jsdmirror.com/gh/DustJadeEcho/vivo-sans-webfont-splitted@718da45685bf27b5fe03779ebe44709f61c723f1/vivo_Sans/vivo_Sans/vivoSans-Bold.ttf") format("truetype");
-}
 .main-header {
   overflow: visible;
 }
@@ -5572,9 +5538,9 @@ button.s-card,
   clear: both;
 }
 
-/* Keep the welcome line independent of the global font setting. */
+/* The backend can choose a dedicated font or make the welcome line follow the global font. */
 .banner .title {
-  font-family: "Xiaolai Welcome", "LXGW WenKai", "KaiTi", "STKaiti", cursive;
+  font-family: var(--curve-banner-title-font-family, "Xiaolai Welcome", "LXGW WenKai", sans-serif);
 }
 
 /* Copyright.vue and Footer.vue intentionally reuse the class name
