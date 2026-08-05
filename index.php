@@ -1,3 +1,13 @@
+<?php
+/**
+ * 基于原主题 <a href="https://github.com/imsyy/vitepress-theme-curve" target="_blank" rel="noopener">VitePress Theme Curve</a> 移植并重构的 Typecho 主题；项目地址：<a href="https://github.com/deershark/curve-theme-typecho" target="_blank" rel="noopener">Curve for Typecho</a>。
+ *
+ * @package Curve for Typecho
+ * @author 鹿形鱼 <https://blog.xingyu.lu/>
+ * @version 0.0.1-beta
+ * @link https://github.com/deershark/curve-theme-typecho
+ */
+?>
 <?php if (!defined('__TYPECHO_ROOT_DIR__')) { exit; } ?>
 <?php $categoriesUrl = curve_page_url('page-categories.php'); ?>
 <?php $defaultBanner = curve_theme_default_banner($this->options); ?>

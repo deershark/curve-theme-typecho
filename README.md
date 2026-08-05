@@ -1,6 +1,6 @@
 # Curve for Typecho
 
-这是 [vitepress-theme-curve](https://github.com/imsyy/vitepress-theme-curve) 的 Typecho 移植版。源主题的组件类名、SCSS、页面布局和交互语义保留在 `assets/scss/source`、`assets/scss/components/_source.scss` 以及 PHP 模板中；Vue/Pinia 仅被替换为 Typecho PHP 数据和原生 JavaScript。
+这是 [curve-theme-typecho](https://github.com/deershark/curve-theme-typecho) 的 Typecho 主题。源主题的组件类名、SCSS、页面布局和交互语义保留在 `assets/scss/source`、`assets/scss/components/_source.scss` 以及 PHP 模板中；Vue/Pinia 仅被替换为 Typecho PHP 数据和原生 JavaScript。
 
 ## 安装
 

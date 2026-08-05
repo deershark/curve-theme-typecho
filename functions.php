@@ -3,9 +3,9 @@
  * Curve for Typecho
  *
  * @package Curve
- * @author Curve Typecho Contributors
+ * @author 鹿形鱼
  * @version 0.1.0
- * @link https://github.com/imsyy/vitepress-theme-curve
+ * @link https://github.com/deershark/curve-theme-typecho
  */
 
 if (!defined('__TYPECHO_ROOT_DIR__')) {
@@ -131,9 +131,9 @@ function curve_validate_cover_urls_json($value)
 function themeConfig($form)
 {
     /* 基础信息 */
-    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('siteAuthorName', null, 'Admin', _t('博主名称'), _t('显示在侧栏和页脚。')));
-    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('siteAuthorLink', null, '', _t('博主链接'), _t('未配置社交链接时用于生成默认社交入口，也会作为页脚版权署名的链接。')));
-    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('siteAuthorEmail', null, '', _t('博主邮箱'), _t('未配置社交链接时用于生成默认 Email 社交入口。')));
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('siteAuthorName', null, '鱼鱼', _t('博主名称'), _t('显示在侧栏和页脚。')));
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('siteAuthorLink', null, '', _t('博主链接'), _t('社交链接为空且填写此项时，显示为侧栏和页脚社交入口；也会作为页脚版权署名的链接。')));
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('siteAuthorEmail', null, '', _t('博主邮箱'), _t('社交链接为空且填写此项时，显示为侧栏和页脚 Email 社交入口。')));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Textarea('intro', null, '记录值得分享的技术、想法与生活。', _t('站点简介'), _t('显示在侧栏时钟卡片中，鼠标悬停时替换时钟显示。')));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Select(
         'homeSubtitleMode', array('custom' => _t('自定义文本'), 'hitokoto' => _t('一言')), 'custom', _t('首页副标题来源'), _t('控制“你好，欢迎来到……”下面的文本；选择一言后才会请求一言接口。')
