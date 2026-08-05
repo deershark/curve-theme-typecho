@@ -54,7 +54,7 @@ MARKDOWN;
 <main class="mian-layout">
     <div class="cat-or-tag privacy-page">
         <div class="title">
-            <h1 class="title-name">隐私协议</h1>
+            <h1 class="title-name"><?php $this->title(); ?></h1>
         </div>
         <div id="page-content" class="markdown-main-style privacy-content"><?php echo curve_render_markdown($pageSource); ?></div>
     </div>

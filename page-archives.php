@@ -12,7 +12,7 @@ if (!defined('__TYPECHO_ROOT_DIR__')) { exit; }
         <?php $stat = $this->widget('Widget_Stat'); ?>
         <div class="cat-or-tag archive-heading">
             <div class="title">
-                <h1 class="title-name">文章归档</h1>
+                <h1 class="title-name"><?php $this->title(); ?></h1>
                 <span class="title-num">文章总览 · <?php echo (int) $stat->publishedPostsNum; ?> 篇文章</span>
             </div>
         </div>

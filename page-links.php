@@ -73,7 +73,7 @@ MARKDOWN
     <div class="link">
         <div class="cat-or-tag">
             <div class="title">
-                <h1 class="title-name">友情链接</h1>
+                <h1 class="title-name"><?php $this->title(); ?></h1>
                 <span class="title-num">友链总览 · <?php echo $friendTotal; ?> 个友链</span>
             </div>
         </div>

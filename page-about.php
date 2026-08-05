@@ -90,7 +90,7 @@ MARKDOWN
 ?>
 <?php $this->need('header.php'); ?>
 <main class="mian-layout"><div class="about">
-<h1 class="title">关于本站</h1>
+<h1 class="title"><?php $this->title(); ?></h1>
 <?php if (!$hasAboutBlock): ?>
     <div class="about-article markdown-main-style s-card"><?php echo curve_render_markdown($pageSource); ?></div>
 <?php elseif (!$aboutResult['valid']): ?>

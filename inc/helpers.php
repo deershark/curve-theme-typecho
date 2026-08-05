@@ -184,14 +184,14 @@ function curve_site_path($options, $path)
     return $base . '/' . ltrim($path, '/');
 }
 
-function curve_page_template_urls()
+function curve_page_template_data()
 {
-    static $urls;
-    if ($urls !== null) {
-        return $urls;
+    static $pagesData;
+    if ($pagesData !== null) {
+        return $pagesData;
     }
 
-    $urls = array();
+    $pagesData = array();
     $pages = Typecho_Widget::widget('Widget_Contents_Page_List');
     while ($pages->next()) {
         $template = trim((string) $pages->template);
@@ -201,8 +201,23 @@ function curve_page_template_urls()
         ob_start();
         $pages->permalink();
         $permalink = trim(ob_get_clean());
-        if ($permalink !== '') {
-            $urls[$template] = $permalink;
+        $title = trim((string) $pages->title);
+        if ($permalink !== '' || $title !== '') {
+            $pagesData[$template] = array(
+                'url' => $permalink,
+                'title' => $title,
+            );
+        }
+    }
+    return $pagesData;
+}
+
+function curve_page_template_urls()
+{
+    $urls = array();
+    foreach (curve_page_template_data() as $template => $pageData) {
+        if ($pageData['url'] !== '') {
+            $urls[$template] = $pageData['url'];
         }
     }
     return $urls;
@@ -212,6 +227,15 @@ function curve_page_url($template)
 {
     $urls = curve_page_template_urls();
     return isset($urls[$template]) ? $urls[$template] : '';
+}
+
+function curve_page_template_title($template, $default = '')
+{
+    $pagesData = curve_page_template_data();
+    if (isset($pagesData[$template]) && $pagesData[$template]['title'] !== '') {
+        return $pagesData[$template]['title'];
+    }
+    return $default;
 }
 
 function curve_post_field($post, $name, $default = '')

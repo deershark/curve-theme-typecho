@@ -3,11 +3,17 @@
 <?php
 $siteUrl = rtrim((string) $this->options->siteUrl, '/');
 $archiveUrl = curve_page_url('page-archives.php');
+$archiveTitle = curve_page_template_title('page-archives.php', '文章归档');
 $categoriesUrl = curve_page_url('page-categories.php');
+$categoriesTitle = curve_page_template_title('page-categories.php', '全部分类');
 $tagsUrl = curve_page_url('page-tags.php');
+$tagsTitle = curve_page_template_title('page-tags.php', '全部标签');
 $aboutUrl = curve_page_url('page-about.php');
+$aboutTitle = curve_page_template_title('page-about.php', '关于本站');
 $linksUrl = curve_page_url('page-links.php');
+$linksTitle = curve_page_template_title('page-links.php', '友情链接');
 $privacyUrl = curve_page_url('page-privacy.php');
+$privacyTitle = curve_page_template_title('page-privacy.php', '隐私协议');
 if ($privacyUrl === '') $privacyUrl = curve_option($this->options, 'privacyUrl');
 $reportUrl = curve_option($this->options, 'reportUrl');
 $feedUrl = (string) $this->options->feedUrl;
@@ -22,23 +28,23 @@ if (empty($socialLinks)) {
 }
 $blogLinks = array(array('name' => '近期文章', 'url' => $siteUrl . '/', 'newTab' => false));
 $columnLinks = array();
-if ($categoriesUrl !== '') $columnLinks[] = array('name' => '全部分类', 'url' => $categoriesUrl, 'newTab' => false);
-if ($tagsUrl !== '') $columnLinks[] = array('name' => '全部标签', 'url' => $tagsUrl, 'newTab' => false);
-if ($archiveUrl !== '') $columnLinks[] = array('name' => '文章归档', 'url' => $archiveUrl, 'newTab' => false);
+if ($categoriesUrl !== '') $columnLinks[] = array('name' => $categoriesTitle, 'url' => $categoriesUrl, 'newTab' => false);
+if ($tagsUrl !== '') $columnLinks[] = array('name' => $tagsTitle, 'url' => $tagsUrl, 'newTab' => false);
+if ($archiveUrl !== '') $columnLinks[] = array('name' => $archiveTitle, 'url' => $archiveUrl, 'newTab' => false);
 $blogLinks = array_merge($blogLinks, $columnLinks);
 $columnLinks = array();
-if ($archiveUrl !== '') $columnLinks[] = array('name' => '文章归档', 'url' => $archiveUrl, 'newTab' => false);
-if ($categoriesUrl !== '') $columnLinks[] = array('name' => '全部分类', 'url' => $categoriesUrl, 'newTab' => false);
-if ($tagsUrl !== '') $columnLinks[] = array('name' => '全部标签', 'url' => $tagsUrl, 'newTab' => false);
+if ($archiveUrl !== '') $columnLinks[] = array('name' => $archiveTitle, 'url' => $archiveUrl, 'newTab' => false);
+if ($categoriesUrl !== '') $columnLinks[] = array('name' => $categoriesTitle, 'url' => $categoriesUrl, 'newTab' => false);
+if ($tagsUrl !== '') $columnLinks[] = array('name' => $tagsTitle, 'url' => $tagsUrl, 'newTab' => false);
 $serviceLinks = array(array('name' => '站点订阅', 'url' => $feedUrl, 'newTab' => false));
-if ($privacyUrl !== '') $serviceLinks[] = array('name' => '隐私协议', 'url' => $privacyUrl, 'newTab' => false);
+if ($privacyUrl !== '') $serviceLinks[] = array('name' => $privacyTitle, 'url' => $privacyUrl, 'newTab' => false);
 if ($reportUrl !== '') $serviceLinks[] = array('name' => '反馈与投诉', 'url' => $reportUrl, 'newTab' => false);
 $footerColumns = array(
     array('title' => '博客', 'links' => $blogLinks),
     array('title' => '专栏', 'links' => $columnLinks),
     array('title' => '页面', 'links' => array_filter(array(
-        $aboutUrl !== '' ? array('name' => '关于本站', 'url' => $aboutUrl, 'newTab' => false) : null,
-        $linksUrl !== '' ? array('name' => '友情链接', 'url' => $linksUrl, 'newTab' => false) : null,
+        $aboutUrl !== '' ? array('name' => $aboutTitle, 'url' => $aboutUrl, 'newTab' => false) : null,
+        $linksUrl !== '' ? array('name' => $linksTitle, 'url' => $linksUrl, 'newTab' => false) : null,
     ))),
     array('title' => '服务', 'links' => $serviceLinks),
 );
@@ -50,17 +56,17 @@ if ($privacyUrl !== '') {
     foreach ($footerColumns as &$footerColumn) {
         if ($footerColumn['title'] !== '服务') continue;
         foreach ($footerColumn['links'] as $footerLink) {
-            if ($footerLink['url'] === $privacyUrl || $footerLink['name'] === '隐私协议' || $footerLink['name'] === '隐私政策') {
+            if ($footerLink['url'] === $privacyUrl || $footerLink['name'] === $privacyTitle || $footerLink['name'] === '隐私协议' || $footerLink['name'] === '隐私政策') {
                 $privacyAdded = true;
                 break 2;
             }
         }
-        $footerColumn['links'][] = array('name' => '隐私协议', 'url' => $privacyUrl, 'newTab' => false);
+        $footerColumn['links'][] = array('name' => $privacyTitle, 'url' => $privacyUrl, 'newTab' => false);
         $privacyAdded = true;
         break;
     }
     unset($footerColumn);
-    if (!$privacyAdded) $footerColumns[] = array('title' => '服务', 'links' => array(array('name' => '隐私协议', 'url' => $privacyUrl, 'newTab' => false)));
+    if (!$privacyAdded) $footerColumns[] = array('title' => '服务', 'links' => array(array('name' => $privacyTitle, 'url' => $privacyUrl, 'newTab' => false)));
 }
 $hasFriendColumn = false;
 foreach ($footerColumns as $footerColumn) {
