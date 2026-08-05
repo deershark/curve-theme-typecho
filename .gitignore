@@ -1,4 +1,3 @@
 .docker/mariadb/
 .docker/typecho/usr/
 .docker/typecho/config.inc.php
-compose.yaml

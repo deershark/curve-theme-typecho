@@ -1,0 +1,148 @@
+name: Publish theme
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version, for example 0.1.0'
+        required: true
+        type: string
+      prerelease:
+        description: 'Mark this release as a pre-release'
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    name: Update version and commit
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      tag: ${{ steps.release.outputs.tag }}
+      sha: ${{ steps.commit.outputs.sha }}
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+    steps:
+      - name: Check out selected revision
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate version and tag
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${GITHUB_REF_TYPE:-}" != 'branch' ]]; then
+            echo 'Publish must be run from a branch so the version commit can be pushed back.' >&2
+            exit 1
+          fi
+
+          version="${RELEASE_VERSION#v}"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Version must look like 1.2.3 or 1.2.3-beta.1" >&2
+            exit 1
+          fi
+
+          tag="v$version"
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
+            echo "Tag $tag already exists" >&2
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Update index.php version
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! grep -Eq '^[[:space:]]*\*[[:space:]]+@version[[:space:]]+' index.php; then
+            echo 'Could not find the @version line in index.php' >&2
+            exit 1
+          fi
+
+          sed -E -i "s/^([[:space:]]*\*[[:space:]]+@version[[:space:]]+).*/\1${VERSION}/" index.php
+          if git diff --quiet -- index.php; then
+            echo "index.php is already at version $VERSION" >&2
+            exit 1
+          fi
+
+      - name: Commit and push version change
+        id: commit
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.php
+          git commit -m "chore: release $TAG"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  check:
+    name: Run checks on release commit
+    needs: prepare
+    uses: ./.github/workflows/check.yml
+    with:
+      ref: ${{ needs.prepare.outputs.sha }}
+    permissions:
+      contents: read
+
+  release:
+    name: Create GitHub release
+    needs: [prepare, check]
+    runs-on: ubuntu-latest
+    env:
+      PRERELEASE: ${{ inputs.prerelease }}
+      RELEASE_SHA: ${{ needs.prepare.outputs.sha }}
+      TAG: ${{ needs.prepare.outputs.tag }}
+    steps:
+      - name: Check out release commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.prepare.outputs.sha }}
+
+      - name: Build theme archive
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          archive="curve-theme-typecho-${TAG}.zip"
+          git archive --format=zip --prefix=curve/ "$RELEASE_SHA" -o "$archive"
+          sha256sum "$archive" > "${archive}.sha256"
+
+          echo "archive=$archive" >> "$GITHUB_ENV"
+
+      - name: Create release and upload archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          release_args=(
+            "$TAG"
+            "$archive"
+            "${archive}.sha256"
+            --target "$RELEASE_SHA"
+            --title "Curve $TAG"
+            --generate-notes
+          )
+          if [[ "$PRERELEASE" == 'true' ]]; then
+            release_args+=(--prerelease)
+          fi
+
+          gh release create "${release_args[@]}"

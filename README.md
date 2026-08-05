@@ -1,93 +1,150 @@
 # Curve for Typecho
 
-这是 [curve-theme-typecho](https://github.com/deershark/curve-theme-typecho) 的 Typecho 主题。源主题的组件类名、SCSS、页面布局和交互语义保留在 `assets/scss/source`、`assets/scss/components/_source.scss` 以及 PHP 模板中；Vue/Pinia 仅被替换为 Typecho PHP 数据和原生 JavaScript。
+<div align="center">
+
+一个简洁、现代、可配置的 Typecho 主题。
+
+[![Check theme](https://github.com/deershark/curve-theme-typecho/actions/workflows/check.yml/badge.svg)](https://github.com/deershark/curve-theme-typecho/actions/workflows/check.yml)
+[![Latest Release](https://img.shields.io/github/v/release/deershark/curve-theme-typecho?display_name=tag&sort=semver)](https://github.com/deershark/curve-theme-typecho/releases)
+[![License](https://img.shields.io/github/license/deershark/curve-theme-typecho)](LICENSE)
+
+</div>
+
+> 本项目移植自 [imsyy/vitepress-theme-curve](https://github.com/imsyy/vitepress-theme-curve)，原作者为 [imsyy](https://github.com/imsyy)。感谢原作者创作并开源了优秀的 Curve 主题。
+
+![Curve for Typecho 预览](screenshot.png)
+
+Curve for Typecho 是将 [imsyy/vitepress-theme-curve](https://github.com/imsyy/vitepress-theme-curve) 移植到 Typecho 的主题版本。它保留了原主题的视觉风格、页面结构和交互体验，并使用 Typecho 原生 PHP、评论系统和文章数据驱动。
+
+## 特性
+
+- 响应式布局，适配桌面端和移动端。
+- 首页、文章页、独立页、分类、标签、搜索、归档和 404 页面。
+- Typecho 原生嵌套评论、相关文章、上下篇、目录、打赏和版权卡片。
+- 可视化主题设置：站点信息、主题外观、导航菜单、社交链接、文章摘要、评论和页脚等。
+- 文章置顶、封面、摘要、阅读量、参考资料和版权卡片等自定义字段。
+- 友链、关于本站、文章归档、分类总览、标签总览和隐私协议页面模板。
+- 支持提示块、Tabs、Timeline、Card、Button、LinkCard、数学公式等文章内容扩展。
+- 原生 JavaScript 交互，无需构建前端项目即可安装使用。
 
 ## 安装
 
-1. 将本目录重命名为 `curve`，上传至 Typecho 的 `usr/themes/curve`。
-2. 在 Typecho 后台「控制台 → 外观」启用 Curve。
-3. 打开「外观 → 设置外观」，主题设置会按站点基础、外观与封面、导航菜单、社交链接、文章与摘要、评论与互动、页脚与其他分组显示。站点基础中可以分别配置首页副标题（自定义文本或一言）和侧栏作者简介；选择一言时才会请求一言接口。社交链接、左上角菜单和默认封面使用可视化列表编辑器，并以 JSON 保存；社交链接使用固定平台枚举且每个平台只能配置一次，左上角菜单图标可以填写 iconfont 名称或图片地址，也可省略。
-4. 按需新建独立页面，并在“自定义模板”中选择：
+### 下载发布包
 
-   - `文章归档`：`page-archives.php`
-   - `关于本站`：`page-about.php`
-   - `分类总览`：`page-categories.php`
-   - `标签总览`：`page-tags.php`
-   - `友情链接`：`page-links.php`
-   - `隐私协议`：`page-privacy.php`
+1. 前往 [Releases](https://github.com/deershark/curve-theme-typecho/releases) 下载最新的 `curve-theme-typecho-*.zip`。
+2. 将压缩包解压到 Typecho 的 `usr/themes/` 目录。压缩包内已经包含 `curve` 主题目录，不需要再次重命名。
+3. 在 Typecho 后台进入「控制台 → 外观」，启用 Curve。
+4. 进入「外观 → 设置外观」，按需完成主题配置。
 
-   主题会根据模板自动识别这些页面并使用实际链接；评论区和页脚“服务”栏会自动显示已创建的隐私协议页面。投诉反馈地址没有内置模板，需要在主题设置中手动填写。
+### 从源码安装
 
-友情链接页面使用 `page-links.php` 模板，友链写在独立页正文的特殊 Markdown 块中：
-
-```md
-<!-- curve-friends
-## 推荐 | 都是大佬，推荐关注
-- 阮一峰 | https://www.ruanyifeng.com/blog/ | https://example.com/avatar.png | 阮老师，知名博主
-
-## 小伙伴们 | 我们在一起，共同进步
-- 我的博客 | https://example.com/ | https://example.com/avatar.png | 分享技术与生活
--->
+```sh
+cd /path/to/typecho/usr/themes
+git clone https://github.com/deershark/curve-theme-typecho.git curve
 ```
 
-格式为：`- 名称 | 链接 | 头像 | 简介`。特殊块外的正文仍按普通 Markdown 渲染，因此可以自由添加标题、说明和友链申请内容。
+然后在 Typecho 后台启用 Curve 即可。
 
-分组标题不是必填的。如果省略分组标题，所有列表项会直接放在一个没有标题的列表中：
+## 页面模板
 
-```md
-<!-- curve-friends
-- 我的博客 | https://example.com/ | https://example.com/avatar.png | 分享技术与生活
--->
-```
+新建独立页面时，可在“自定义模板”中选择以下模板：
 
-如果需要分组，标题不要求必须是两个井号，使用 `#` 到 `######` 均可，例如 `# 推荐 | 推荐站点`。
+| 页面 | 模板文件 |
+| --- | --- |
+| 文章归档 | `page-archives.php` |
+| 关于本站 | `page-about.php` |
+| 分类总览 | `page-categories.php` |
+| 标签总览 | `page-tags.php` |
+| 友情链接 | `page-links.php` |
+| 隐私协议 | `page-privacy.php` |
 
-页脚使用固定的“博客”“专栏”“页面”“服务”分栏，不内置项目链接；最后会追加一个“友链”栏，随机展示 3 个友链。友链栏的数据优先读取上述 `curve-friends` 配置，点击标题旁的刷新按钮可以换一批；尚未创建友情链接页时使用原 Curve 主题的默认推荐友链。
+主题会自动识别这些页面并使用实际链接。评论区和页脚的“服务”栏也会自动显示已创建的隐私协议页面；投诉反馈地址则需要在主题设置中手动填写。
 
 ## 文章字段
 
-在文章编辑页的自定义字段中可填写：
+在文章编辑页的自定义字段中可以使用：
 
 | 字段 | 用途 |
 | --- | --- |
 | `cover` | 文章封面图片 URL |
-| `description` | 列表摘要；留空时自动截取正文 |
-| `top` | 显示“置顶”标记，并让首页文章查询优先排序 |
-| `references` | 参考资料，一行一个 `标题|https://链接` |
-| `copyright` | `0` 隐藏文章版权卡片，默认显示 |
-| `views` | 文章访问量，由主题访问文章时自动累加 |
+| `description` | 文章摘要；留空时自动截取正文 |
+| `top` | 填写 `1` 后显示置顶标记，并让文章优先显示在首页 |
+| `references` | 参考资料，一行一个 `标题\|https://链接` |
+| `copyright` | 填写 `0` 隐藏版权卡片 |
+| `views` | 文章阅读量，由主题自动累加 |
 
-旧文章中的 `articleGPT` 字段仍会被读取作为兼容，但编辑页不再提供该字段；新文章请使用 `description`。
+旧文章中的 `articleGPT` 字段仍会兼容读取，但新文章请使用 `description`。主题设置中的 FakeGPT 摘要可以控制摘要卡片及其点击文案。
 
-主题设置中的 `FakeGPT 摘要` 可控制摘要卡片开关，`FakeGPT 点击文案` 用于配置点击卡片右上角 FakeGPT 后显示的文字。
+## 友情链接
 
-首页会读取 `top=1` 的文章并优先排在首页分页之前；从首页筛选分类时也会保留置顶排序，直接打开分类归档页仍按 Typecho 原生发布时间排序。
+使用 `page-links.php` 模板的独立页，可以在正文中加入 `curve-friends` 配置块：
 
-## 已实现
+```md
+<!-- curve-friends
+## 推荐 | 推荐关注的站点
+- 阮一峰 | https://www.ruanyifeng.com/blog/ | https://example.com/avatar.png | 阮老师，知名博主
 
-- 首页、文章页、独立页、分类/标签/搜索归档、404 和原生分页。
-- Typecho 原生嵌套评论、相关文章、上下篇、文章目录、打赏与版权卡片。
-- 文章阅读量统计：使用文章自定义字段保存，同一浏览器同一篇文章一小时内不重复计数。
-- 源主题的 Banner、导航、移动菜单、设置面板、右键菜单、侧栏、封面卡片、归档、友链、About、Project、页脚和倒计时结构。
-- 源主题的 SCSS 由 `assets/scss/curve.scss` 编译为 `assets/css/curve.css`，Typecho 只增加少量数据与评论适配样式。
+## 小伙伴 | 一起交流和成长
+- 我的博客 | https://example.com/ | https://example.com/avatar.png | 分享技术与生活
+-->
+```
 
-## 与原 VitePress 主题的差异
+列表格式为 `名称 | 链接 | 头像 | 简介`。分组标题可以省略，也可以使用 1 到 6 级 Markdown 标题。配置块之外的正文仍会按普通 Markdown 渲染。
 
-原项目的 Vue/Pinia 被替换为 PHP/JavaScript；一言仍作为可选的外部能力使用。评论统一使用 Typecho 原生评论，不支持 Algolia、Artalk、Twikoo、Meting、音乐播放器或第三方统计服务。由于 Typecho 的文章内容不是 VitePress 构建结果，文章 Frontmatter 改为文章自定义字段，友链使用独立页 Markdown 特殊块。
+页脚会随机展示 3 个友链，并提供刷新按钮更换列表；没有配置友情链接页时，会使用主题内置的默认推荐友链。
 
-文章正文兼容原 Curve 主题的常用标签：`::: info/tip/warning/danger/details` 提示块、`:::tabs` + `== 标签` 选项卡、`::: timeline` 时间线、`::: radio` 单选标记、`::: card` 卡片、`::: button` 按钮和 `<LinkCard url="..." title="..." desc="..." />` 链接卡片；数学公式 `$...$`/`$$...$$` 会按需加载 MathJax。普通 Markdown/HTML 的标题、代码块、表格、引用、图片和链接也得到样式支持。
+## 内容扩展
 
-后台写文章页面会自动显示 Curve 标签快捷工具栏。选中文本后点击对应按钮，可以直接将内容包入提示块、Details、Card、Button、Radio 等语法；也可以一键插入 Tabs、LinkCard、数学公式和 Admonition 模板。
+文章正文支持以下常用写法：
 
-## 开发与验证
+- Admonition：`::: info`、`::: tip`、`::: warning`、`::: danger`、`::: details`
+- Tabs：`:::tabs` 配合 `== 标签`
+- Timeline：`::: timeline`
+- Radio：`::: radio`
+- Card、Button：`::: card`、`::: button`
+- LinkCard：`<LinkCard url="..." title="..." desc="..." />`
+- 数学公式：`$...$` 和 `$$...$$`
 
-样式源修改后，需要重新编译 CSS：
+后台编辑器会自动加载 Curve 快捷工具栏，可快速插入这些内容结构。
+
+## 本地开发
+
+仓库提供 Docker Compose 开发环境：
 
 ```sh
-node tools/extract-source-styles.mjs /home/yuco/projects/vitepress-theme-curve/.vitepress/theme
+docker compose up -d
+```
+
+启动后访问 <http://localhost:8081>。主题源码会以只读方式挂载到容器中的 `usr/themes/curve`。
+
+样式源修改后，使用 Sass CLI 重新编译：
+
+```sh
 node /path/to/sass/sass.js assets/scss/curve.scss assets/css/curve.css --style=expanded --no-source-map
+```
+
+本地基础检查：
+
+```sh
 find . -path './.docker' -prune -o -name '*.php' -print0 | xargs -0 -n1 php -l
 node --check assets/js/curve.js
 ```
 
-建议至少测试：首页、含封面/无封面文章、长标题、无标签文章、分页、搜索、未登录评论和移动端菜单。
+建议至少手动验证：首页、含封面和无封面文章、长标题、无标签文章、分页、搜索、未登录评论以及移动端菜单。
+
+## GitHub Actions
+
+- `Check theme`：Push 和 Pull Request 时自动检查 PHP 7.4/8.3 语法、JavaScript/MJS 语法及提交空白。
+- `Publish theme`：在 Actions 中手动输入版本号，例如 `0.1.0`。流水线会更新 `index.php` 的 `@version`，提交并推送到当前分支，检查新提交后创建 `v0.1.0` Release，并上传主题压缩包和 SHA-256 校验文件。
+
+发布流水线需要仓库允许 `GITHUB_TOKEN` 写入内容；如果目标分支启用了分支保护，请允许 GitHub Actions 推送，或从允许推送的分支执行发布。
+
+## 上游项目与移植说明
+
+本项目移植自 [imsyy/vitepress-theme-curve](https://github.com/imsyy/vitepress-theme-curve)，原作者为 [imsyy](https://github.com/imsyy)。原主题基于 VitePress、Vue 和 Pinia；本项目将其替换为 Typecho PHP 模板与原生 JavaScript。评论统一使用 Typecho 原生评论，不包含 Algolia、Artalk、Twikoo、Meting、音乐播放器或第三方统计服务。一言作为可选的外部能力，仅在启用对应设置时请求接口。
+
+如果你正在寻找原版 VitePress 主题，请直接访问上游项目：[imsyy/vitepress-theme-curve](https://github.com/imsyy/vitepress-theme-curve)。
+
+## 许可证
+
+本项目基于 [MIT License](LICENSE) 发布。由于本项目源自上游 Curve 主题，请同时遵守上游项目的许可与署名要求。
