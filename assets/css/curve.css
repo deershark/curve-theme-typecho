@@ -236,6 +236,9 @@ html.image .loading {
 html.image .tags-cloud .all-tags::after {
   display: none;
 }
+html.image .home:not(.archive-page) .type-bar {
+  background-color: #1b1c20;
+}
 
 * {
   -webkit-user-drag: none;
@@ -1637,9 +1640,10 @@ a:hover {
   filter: brightness(0.6);
 }
 .background .cover {
-  width: auto;
-  height: auto;
-  min-height: 100%;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   opacity: 0;
   transition: filter 0.3s, opacity 0.3s;
 }
@@ -2531,11 +2535,11 @@ a:hover {
   font-weight: bold;
   margin: 0.8rem 0;
   transition: color 0.3s;
-  display: -webkit-box;
+  display: block;
   overflow: hidden;
-  word-break: break-all;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  word-break: normal;
 }
 .post-lists .post-item .post-content .post-desc {
   margin-top: -0.4rem;
@@ -5298,6 +5302,14 @@ a:hover {
   background-color: var(--main-color-bg);
 }
 .post > .post-meta .other-meta .meta.hover:hover .iconfont {
+  color: var(--main-color);
+}
+.post > .post-meta .other-meta .meta.edit-post {
+  flex-shrink: 0;
+  color: var(--main-color);
+  background-color: var(--main-color-bg);
+}
+.post > .post-meta .other-meta .meta.edit-post .iconfont {
   color: var(--main-color);
 }
 .post > .post-content {

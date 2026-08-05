@@ -1,12 +1,13 @@
 <?php if (!defined('__TYPECHO_ROOT_DIR__')) { exit; } ?>
 <?php $curveViews = curve_record_view($this); ?>
+<?php $curveEditUrl = ''; if ($this->user->hasLogin()) { ob_start(); $this->options->adminUrl('write-post.php?cid=' . (int) $this->cid); $curveEditUrl = trim(ob_get_clean()); } ?>
 <?php $this->need('header.php'); ?>
 <main class="mian-layout is-post">
     <div class="post">
         <div class="post-meta">
             <div class="meta"><div class="categories"><?php foreach ((array) $this->categories as $category): ?><a class="cat-item" href="<?php echo curve_esc($category['permalink']); ?>"><i class="iconfont icon-folder"></i><span class="name"><?php echo curve_esc($category['name']); ?></span></a><?php endforeach; ?></div><div class="tags"><?php foreach ((array) $this->tags as $tag): ?><a class="tag-item" href="<?php echo curve_esc($tag['permalink']); ?>"><i class="iconfont icon-hashtag"></i><span class="name"><?php echo curve_esc($tag['name']); ?></span></a><?php endforeach; ?></div></div>
             <h1 class="title"><?php $this->title(); ?></h1>
-            <div class="other-meta"><span class="meta date"><i class="iconfont icon-date"></i><?php $this->date('Y-m-d'); ?></span><span class="update meta"><i class="iconfont icon-time"></i><?php echo date('Y-m-d', (int) $this->modified); ?></span><span class="hot meta"><i class="iconfont icon-fire"></i><span><?php echo (int) $curveViews; ?></span></span><a class="chat meta hover" href="#main-comment"><i class="iconfont icon-chat"></i><span><?php $this->commentsNum('0', '1', '%d'); ?></span></a></div>
+            <div class="other-meta"><span class="meta date"><i class="iconfont icon-date"></i><?php $this->date('Y-m-d'); ?></span><span class="update meta"><i class="iconfont icon-time"></i><?php echo date('Y-m-d', (int) $this->modified); ?></span><span class="hot meta"><i class="iconfont icon-fire"></i><span><?php echo (int) $curveViews; ?></span></span><a class="chat meta hover" href="#main-comment"><i class="iconfont icon-chat"></i><span><?php $this->commentsNum('0', '1', '%d'); ?></span></a><?php if ($curveEditUrl !== ''): ?><a class="edit-post meta hover" href="<?php echo curve_esc($curveEditUrl); ?>" title="编辑文章" aria-label="编辑文章"><i class="iconfont icon-tools"></i><span>编辑文章</span></a><?php endif; ?></div>
         </div>
         <div class="post-content">
             <article class="post-article s-card">

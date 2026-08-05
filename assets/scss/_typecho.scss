@@ -438,6 +438,9 @@ button.s-card,
   isolation: isolate;
   background-color: var(--main-card-background);
 }
+html.image .home:not(.archive-page) .type-bar {
+  background-color: #1b1c20;
+}
 :root {
   --home-type-bar-top: calc(60px + 1rem);
   --home-type-bar-cover-bottom: var(--home-type-bar-top);
