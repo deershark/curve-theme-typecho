@@ -6468,6 +6468,47 @@ button.s-card,
   min-height: auto;
 }
 
+.link-config-errors,
+.link-config-empty,
+.link-config-help {
+  margin-top: 1.5rem;
+  padding: 1.4rem 1.6rem;
+}
+
+.link-config-errors {
+  border-left: 4px solid var(--main-color);
+}
+
+.link-config-errors strong,
+.link-config-empty strong {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.link-config-errors p,
+.link-config-empty p {
+  margin: 0;
+  color: var(--main-font-second-color);
+}
+
+.link-config-errors ul {
+  margin: 0.8rem 0 0;
+  padding-left: 1.4rem;
+  color: var(--main-font-second-color);
+}
+
+.link-config-errors li + li {
+  margin-top: 0.35rem;
+}
+
+.link-config-help {
+  cursor: default;
+}
+
+.link-config-help > :first-child {
+  margin-top: 0;
+}
+
 .cat-or-tag.privacy-page .privacy-content {
   margin-top: 2rem;
   padding-bottom: 3rem;

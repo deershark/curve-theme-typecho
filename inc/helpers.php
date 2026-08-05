@@ -469,51 +469,115 @@ function curve_social_icon_for_link($link)
     return curve_social_icon(is_array($link) && isset($link['name']) ? $link['name'] : '');
 }
 
-/** 解析独立页中的友情链接 Markdown 块。 */
-function curve_parse_friend_markdown($content)
+/**
+ * 解析独立页中的友情链接 Markdown 块。
+ *
+ * 默认只返回可渲染的分组，保持页脚等旧调用方的兼容性；传入 true
+ * 时返回 valid/groups/errors，供友情链接页面显示具体的配置错误。
+ */
+function curve_parse_friend_markdown($content, $detailed = false)
 {
     $groups = array();
-    $current = null;
+    $currentIndex = null;
+    $errors = array();
     $lines = preg_split('/\r\n|\r|\n/', (string) $content);
-    foreach ($lines as $line) {
-        $line = trim($line);
-        if (preg_match('/^#{1,6}\s+(.+?)\s*$/u', $line, $match)) {
-            $parts = array_map('trim', explode('|', $match[1], 2));
-            if ($parts[0] === '') {
+    $addError = function ($lineNumber, $message) use (&$errors) {
+        $prefix = $lineNumber > 0 ? '第' . $lineNumber . '行：' : '';
+        $errors[] = $prefix . $message;
+    };
+
+    foreach ($lines as $lineIndex => $rawLine) {
+        $lineNumber = $lineIndex + 1;
+        $line = trim($rawLine);
+        if ($line === '') {
+            continue;
+        }
+
+        if (preg_match('/^#{1,6}/u', $line)) {
+            if (!preg_match('/^#{1,6}\s+(.+?)\s*$/u', $line, $match)) {
+                $currentIndex = null;
+                $addError($lineNumber, '分组标题格式无效，请使用“## 分组名称 | 分组说明”。');
                 continue;
             }
-            $current = array(
+            $parts = array_map('trim', explode('|', $match[1], 2));
+            if ($parts[0] === '') {
+                $currentIndex = null;
+                $addError($lineNumber, '分组名称不能为空。');
+                continue;
+            }
+            $groups[] = array(
                 'typeName' => $parts[0],
                 'typeDesc' => isset($parts[1]) && $parts[1] !== '' ? $parts[1] : '与优秀的人和站点同行',
                 'typeList' => array(),
+                '_line' => $lineNumber,
             );
-            $groups[] = $current;
+            $currentIndex = count($groups) - 1;
             continue;
         }
+
         if (preg_match('/^[-*+]\s+(.+?)\s*$/u', $line, $match)) {
-            if ($current === null) {
-                $current = array(
+            if ($currentIndex === null) {
+                $groups[] = array(
                     'typeName' => '',
                     'typeDesc' => '',
                     'typeList' => array(),
+                    '_line' => 0,
                 );
-                $groups[] = $current;
+                $currentIndex = count($groups) - 1;
             }
             $parts = array_map('trim', explode('|', $match[1], 4));
-            if (count($parts) < 2 || $parts[0] === '' || !filter_var($parts[1], FILTER_VALIDATE_URL)) {
+            if (count($parts) < 2) {
+                $addError($lineNumber, '友链格式无效，请使用“- 名称 | 链接 | 头像 | 简介”。');
                 continue;
             }
-            $groups[count($groups) - 1]['typeList'][] = array(
+            if ($parts[0] === '') {
+                $addError($lineNumber, '友链名称不能为空。');
+                continue;
+            }
+            if (!filter_var($parts[1], FILTER_VALIDATE_URL)) {
+                $addError($lineNumber, '友链链接不是有效 URL，请检查链接地址。');
+                continue;
+            }
+            if (isset($parts[2]) && $parts[2] !== '' && !filter_var($parts[2], FILTER_VALIDATE_URL)) {
+                $addError($lineNumber, '头像地址不是有效 URL；如果不需要头像，请留空该字段。');
+                continue;
+            }
+            $groups[$currentIndex]['typeList'][] = array(
                 'name' => $parts[0],
                 'url' => $parts[1],
-                'avatar' => isset($parts[2]) && filter_var($parts[2], FILTER_VALIDATE_URL) ? $parts[2] : '',
+                'avatar' => isset($parts[2]) && $parts[2] !== '' ? $parts[2] : '',
                 'desc' => isset($parts[3]) && $parts[3] !== '' ? $parts[3] : parse_url($parts[1], PHP_URL_HOST),
             );
+            continue;
+        }
+
+        $addError($lineNumber, '无法识别这行内容，请使用“## 分组标题”或“- 名称 | 链接 | 头像 | 简介”格式。');
+    }
+
+    if (trim((string) $content) === '') {
+        $errors[] = 'curve-friends 配置块为空，请按下方教程填写至少一个友链。';
+    }
+
+    foreach ($groups as $group) {
+        if (empty($group['typeList']) && !empty($group['_line'])) {
+            $addError($group['_line'], '分组“' . $group['typeName'] . '”至少需要一条格式正确的友链。');
         }
     }
-    return array_values(array_filter($groups, function ($group) {
+
+    $groups = array_values(array_filter($groups, function ($group) {
         return !empty($group['typeList']);
     }));
+    foreach ($groups as &$group) {
+        unset($group['_line']);
+    }
+    unset($group);
+
+    $result = array(
+        'valid' => empty($errors) && !empty($groups),
+        'groups' => $groups,
+        'errors' => array_values(array_unique($errors)),
+    );
+    return $detailed ? $result : $groups;
 }
 
 /** 将友情链接分组输出为 Curve 卡片列表。 */
