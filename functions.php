@@ -20,7 +20,17 @@ function curve_is_single_emoji($value)
     $value = trim((string) $value);
     if ($value === '') return true;
 
-    return preg_match('/^(?:\p{Regional_Indicator}{2}|(?:\p{Extended_Pictographic}(?:\x{FE0F}|\x{FE0E})?(?:\p{Emoji_Modifier})?(?:\x{200D}\p{Extended_Pictographic}(?:\x{FE0F}|\x{FE0E})?(?:\p{Emoji_Modifier})?)*)|(?:[0-9#*]\x{FE0F}?\x{20E3}))$/u', $value) === 1;
+    $emojiPattern = '/^(?:\p{Regional_Indicator}{2}|(?:\p{Extended_Pictographic}(?:\x{FE0F}|\x{FE0E})?(?:\p{Emoji_Modifier})?(?:\x{200D}\p{Extended_Pictographic}(?:\x{FE0F}|\x{FE0E})?(?:\p{Emoji_Modifier})?)*)|(?:[0-9#*]\x{FE0F}?\x{20E3}))$/u';
+    $matched = @preg_match($emojiPattern, $value);
+    if ($matched !== false) {
+        return $matched === 1;
+    }
+
+    /* Older PCRE builds do not know the Extended_Pictographic property.
+     * Keep the same single-emoji rule with common Unicode ranges as a fallback. */
+    $emojiBase = '(?:[\x{1F000}-\x{1FAFF}]|[\x{2300}-\x{23FF}]|[\x{2600}-\x{27BF}]|[\x{2B00}-\x{2BFF}]|[\x{3030}-\x{303D}]|[\x{3297}-\x{3299}]|[\x{00A9}\x{00AE}\x{203C}\x{2049}\x{2122}\x{2139}])';
+    $fallbackPattern = '/^(?:[\x{1F1E6}-\x{1F1FF}]{2}|' . $emojiBase . '(?:[\x{FE0F}\x{FE0E}])?(?:[\x{1F3FB}-\x{1F3FF}])?(?:\x{200D}' . $emojiBase . '(?:[\x{FE0F}\x{FE0E}])?(?:[\x{1F3FB}-\x{1F3FF}])?)*|[0-9#*]\x{FE0F}?\x{20E3})$/u';
+    return @preg_match($fallbackPattern, $value) === 1;
 }
 
 /** 侧栏社交链接只允许选择最多两个社交链接名称。 */
