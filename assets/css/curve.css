@@ -5198,8 +5198,20 @@ a:hover {
 .post > .post-meta .meta .categories {
   flex: 0 0 auto;
   margin-right: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.post > .post-meta .meta .categories::-webkit-scrollbar {
+  display: none;
 }
 .post > .post-meta .meta .categories .cat-item {
+  flex: 0 0 auto;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -5209,6 +5221,7 @@ a:hover {
   border-radius: 8px;
   background-color: var(--main-mask-Inverse-background);
   opacity: 0.8;
+  white-space: nowrap;
 }
 .post > .post-meta .meta .categories .cat-item .iconfont {
   margin-right: 6px;
