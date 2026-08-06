@@ -6,6 +6,8 @@
     <meta charset="<?php $this->options->charset(); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title><?php $this->archiveTitle('', '', ' - '); ?><?php $this->options->title(); ?></title>
+    <?php $curveFavicon = curve_option($this->options, 'logoUrl'); if ($curveFavicon === '') $curveFavicon = curve_theme_asset_url($this->options, 'assets/images/logo.webp'); ?>
+    <link rel="icon" href="<?php echo curve_esc($curveFavicon); ?>" type="image/webp">
     <script>
         (function () {
             var root = document.documentElement;
