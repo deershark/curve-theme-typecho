@@ -1010,6 +1010,51 @@ function curve_markdown_render_tabs($params, $body)
     return $html . '</div>';
 }
 
+/** 展开 Markdown 的引用式图片语法，例如 ![说明][1]。 */
+function curve_markdown_expand_image_references($content)
+{
+    $referencePattern = '/^\s*\[([^\]]+)\]:\s*(?:<([^>\r\n]+)>|(\S+))(?:\s+(?:"([^"]*)"|\'([^\']*)\'|\(([^)]*)\)))?\s*$/mi';
+    $references = array();
+    if (!preg_match_all($referencePattern, (string) $content, $matches, PREG_SET_ORDER)) {
+        return $content;
+    }
+
+    foreach ($matches as $match) {
+        $id = strtolower(trim((string) $match[1]));
+        $id = preg_replace('/\s+/u', ' ', $id);
+        $url = isset($match[2]) && $match[2] !== '' ? $match[2] : $match[3];
+        $title = isset($match[4]) && $match[4] !== '' ? $match[4] : (isset($match[5]) && $match[5] !== '' ? $match[5] : (isset($match[6]) ? $match[6] : ''));
+        if ($id !== '' && $url !== '') {
+            $references[$id] = array('url' => $url, 'title' => $title);
+        }
+    }
+
+    if (empty($references)) {
+        return $content;
+    }
+
+    $usedReferences = array();
+    $content = preg_replace_callback('/!\[([^\]]*)\]\s*\[([^\]]*)\]/u', function ($match) use ($references, &$usedReferences) {
+        $id = trim($match[2]) !== '' ? trim($match[2]) : trim($match[1]);
+        $id = strtolower(preg_replace('/\s+/u', ' ', $id));
+        if ($id === '' || !isset($references[$id])) {
+            return $match[0];
+        }
+        $usedReferences[$id] = true;
+        $reference = $references[$id];
+        return '![' . $match[1] . '](' . $reference['url'] . ')';
+    }, (string) $content);
+
+    if (!empty($usedReferences)) {
+        $content = preg_replace_callback($referencePattern, function ($match) use ($usedReferences) {
+            $id = strtolower(trim((string) $match[1]));
+            $id = preg_replace('/\s+/u', ' ', $id);
+            return isset($usedReferences[$id]) ? '' : $match[0];
+        }, $content);
+    }
+    return $content;
+}
+
 /**
  * 把原主题的容器和 LinkCard 转成占位符，交给现有 Markdown 渲染器统一处理。
  * 只识别白名单标签，未知的 ::: 内容仍按普通文本输出。
@@ -1098,6 +1143,7 @@ function curve_render_markdown($content)
     if ($content === '') {
         return $content;
     }
+    $content = curve_markdown_expand_image_references($content);
     /* Typecho may wrap an unparsed Markdown field in <p> tags. Convert that
      * wrapper back to Markdown before parsing; preserve already-rendered HTML. */
     /* Typecho's Markdown plugin may turn each source line into a paragraph.
@@ -1449,6 +1495,7 @@ function curve_normalize_markdown_html($content)
     if (!empty($protected)) {
         $content = strtr($content, $protected);
     }
+    $content = preg_replace_callback('/<img\b([^>]*)>/is', 'curve_markdown_normalize_image_tag', $content);
     $headingIndex = 0;
     $content = preg_replace_callback('/<h([1-6])([^>]*)>(.*?)<\/h\1>/is', function ($match) use (&$headingIndex) {
         $headingIndex++;
@@ -1468,6 +1515,47 @@ function curve_normalize_markdown_html($content)
         : '<div class="markdown-body">' . $content . '</div>';
 }
 
+/** 将图片的 alt 文本渲染为图片下方的说明文字。 */
+function curve_markdown_normalize_image_tag($match)
+{
+    $attributes = isset($match[1]) ? (string) $match[1] : '';
+    if (preg_match('/\bclass\s*=\s*(["\'])(.*?)\1/i', $attributes, $classMatch)) {
+        $className = trim((string) $classMatch[2]);
+        if (preg_match('/(?:^|\s)(?:post-img|link-img|cover-img)(?:\s|$)/i', $className)) {
+            return '<img' . $attributes . '>';
+        }
+        $attributes = preg_replace('/\bclass\s*=\s*(["\'])(.*?)\1/i', 'class="' . curve_esc(trim($className . ' post-img')) . '"', $attributes, 1);
+    } else {
+        $attributes = ' class="post-img"' . $attributes;
+    }
+
+    if (!preg_match('/\balt\s*=\s*(["\'])(.*?)\1/i', $attributes, $altMatch)) {
+        return '<img' . $attributes . '>';
+    }
+    $alt = trim(htmlspecialchars_decode((string) $altMatch[2], ENT_QUOTES));
+    if ($alt === '') {
+        return '<img' . $attributes . '>';
+    }
+    return '<span class="img-fancybox"><img' . $attributes . '><span class="post-img-tip">' . curve_esc($alt) . '</span></span>';
+}
+
+/** 渲染 Markdown 图片，并将说明文字放到图片下方。 */
+function curve_markdown_render_image($url, $alt = '', $title = '')
+{
+    $url = trim(htmlspecialchars_decode((string) $url, ENT_QUOTES));
+    $alt = htmlspecialchars_decode((string) $alt, ENT_QUOTES);
+    $title = htmlspecialchars_decode((string) $title, ENT_QUOTES);
+    if ($url === '' || preg_match('/[\s"\'<>]/u', $url) || !preg_match('/^(?:https?:\/\/|\/)/i', $url)) {
+        return '';
+    }
+    $attributes = ' class="post-img" src="' . curve_esc($url) . '" alt="' . curve_esc($alt) . '"';
+    if ($title !== '') {
+        $attributes .= ' title="' . curve_esc($title) . '"';
+    }
+    $caption = trim($alt) !== '' ? '<span class="post-img-tip">' . curve_esc($alt) . '</span>' : '';
+    return '<span class="img-fancybox"><img' . $attributes . '>' . $caption . '</span>';
+}
+
 function curve_markdown_inline($text)
 {
     $text = htmlspecialchars((string) $text, ENT_QUOTES, 'UTF-8');
@@ -1478,7 +1566,9 @@ function curve_markdown_inline($text)
         $mathTokens[$index] = $formula;
         return 'CURVEMATHTOKEN' . $index . 'X';
     }, $text);
-    $text = preg_replace('/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)(?:\s+["\']([^"\']*)["\'])?\)/', '<img src="$2" alt="$1" title="$3">', $text);
+    $text = preg_replace_callback('/!\[([^\]]*)\]\(((?:https?:\/\/|\/)[^\s)]+)(?:\s+["\']([^"\']*)["\'])?\)/', function ($match) {
+        return curve_markdown_render_image($match[2], $match[1], isset($match[3]) ? $match[3] : '');
+    }, $text);
     $text = preg_replace('/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/', '<a href="$2" target="_blank" rel="noopener">$1</a>', $text);
     $text = preg_replace('/`([^`]+)`/', '<code>$1</code>', $text);
     $text = preg_replace('/\*\*([^*]+)\*\*/', '<strong>$1</strong>', $text);
