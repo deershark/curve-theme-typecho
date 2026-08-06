@@ -1166,14 +1166,19 @@ function curve_render_markdown($content)
         $inner = preg_replace('/<br\s*\/?\s*>/i', "\n", $match[1]);
         return "\n" . trim($inner) . "\n";
     }, $content);
-    $plainContent = strip_tags($content);
-    $hasExtensionSyntax = preg_match('/(?:^|\n)\s*:{3,}\s*(?:tabs|details|timeline|radio|button|card|note|info|question|summary|tip|hint|warning|important|caution|danger|error)\b/im', $plainContent)
+    /* Typecho has already rendered fenced code blocks by this point. Do not
+     * inspect their contents when deciding whether the whole document is
+     * still raw Markdown: shell prompts, Docker comments, and list-looking
+     * code lines are all valid text inside <pre>/<code>. */
+    $plainContentForDetection = preg_replace('/<(?:pre|code|script|style|textarea)\b[^>]*>.*?<\/(?:pre|code|script|style|textarea)>/is', '', $content);
+    $plainContentForDetection = strip_tags((string) $plainContentForDetection);
+    $hasExtensionSyntax = preg_match('/(?:^|\n)\s*:{3,}\s*(?:tabs|details|timeline|radio|button|card|note|info|question|summary|tip|hint|warning|important|caution|danger|error)\b/im', $plainContentForDetection)
         || preg_match('/<LinkCard\b/i', $content)
-        || preg_match('/^\s*```\s*ad-[a-z]+/im', $plainContent)
+        || preg_match('/^\s*```\s*ad-[a-z]+/im', $plainContentForDetection)
         || preg_match('/<p[^>]*>\s*(?::{3,}|={2,}|```)/i', $content);
     $paragraphWrappedExtension = preg_match('/<p[^>]*>\s*(?::{3,}|={2,}|```)/i', $content)
         && !preg_match('/<(?!\/?(?:p|br)\b)[^>]+>/i', $content);
-    $looksLikeWrappedMarkdown = preg_match('/(?:^|\n)\s*(?:#{1,6}\s|```|[-*+]\s|\d+\.\s|>\s|:{3,}\s)/m', $plainContent)
+    $looksLikeWrappedMarkdown = preg_match('/(?:^|\n)\s*(?:#{1,6}\s|```|[-*+]\s|\d+\.\s|>\s|:{3,}\s)/m', $plainContentForDetection)
         && preg_match('/^\s*<p\b/i', $content);
     if ($looksLikeWrappedMarkdown || $paragraphWrappedExtension) {
         $content = preg_replace('/<br\s*\/?>/i', "\n", $content);
@@ -1919,7 +1924,7 @@ function curve_comment_client_meta($agent)
     return $platform !== '' ? $platform : '未知系统';
 }
 
-/** 将 IP 归属地格式化为“中国省份 / 中国港澳 / 其他国家”。 */
+/** 将 IP 归属地格式化为“中国省份 / 中国港澳台 / 其他国家”。 */
 function curve_comment_format_location($data)
 {
     if (!is_array($data)) {
@@ -1930,50 +1935,17 @@ function curve_comment_format_location($data)
     $country = trim(isset($data['country']) ? $data['country'] : '');
     $region = trim(isset($data['region']) ? $data['region'] : '');
 
-    if ($code === 'HK' || strpos($country, '香港') !== false || strpos($region, '香港') !== false) {
+    if ($code === 'HK') {
         return '中国香港';
     }
-    if ($code === 'MO' || strpos($country, '澳门') !== false || strpos($region, '澳门') !== false) {
+    if ($code === 'MO') {
         return '中国澳门';
     }
-
-    if ($code === 'CN' || $country === '中国' || $country === 'China') {
-        $provinceMap = array(
-            'beijing' => '北京市', '北京' => '北京市',
-            'shanghai' => '上海市', '上海' => '上海市',
-            'tianjin' => '天津市', '天津' => '天津市',
-            'chongqing' => '重庆市', '重庆' => '重庆市',
-            'hebei' => '河北省', '河北' => '河北省',
-            'shanxi' => '山西省', '山西' => '山西省',
-            'liaoning' => '辽宁省', '辽宁' => '辽宁省',
-            'jilin' => '吉林省', '吉林' => '吉林省',
-            'heilongjiang' => '黑龙江省', '黑龙江' => '黑龙江省',
-            'jiangsu' => '江苏省', '江苏' => '江苏省',
-            'zhejiang' => '浙江省', '浙江' => '浙江省',
-            'anhui' => '安徽省', '安徽' => '安徽省',
-            'fujian' => '福建省', '福建' => '福建省',
-            'jiangxi' => '江西省', '江西' => '江西省',
-            'shandong' => '山东省', '山东' => '山东省',
-            'henan' => '河南省', '河南' => '河南省',
-            'hubei' => '湖北省', '湖北' => '湖北省',
-            'hunan' => '湖南省', '湖南' => '湖南省',
-            'guangdong' => '广东省', '广东' => '广东省',
-            'hainan' => '海南省', '海南' => '海南省',
-            'sichuan' => '四川省', '四川' => '四川省',
-            'guizhou' => '贵州省', '贵州' => '贵州省',
-            'yunnan' => '云南省', '云南' => '云南省',
-            'shaanxi' => '陕西省', '陕西' => '陕西省',
-            'gansu' => '甘肃省', '甘肃' => '甘肃省',
-            'qinghai' => '青海省', '青海' => '青海省',
-            'taiwan' => '台湾', '台湾' => '台湾',
-            'inner mongolia' => '内蒙古自治区', '内蒙古' => '内蒙古自治区',
-            'guangxi' => '广西壮族自治区', '广西' => '广西壮族自治区',
-            'tibet' => '西藏自治区', 'xizang' => '西藏自治区', '西藏' => '西藏自治区',
-            'ningxia' => '宁夏回族自治区', '宁夏' => '宁夏回族自治区',
-            'xinjiang' => '新疆维吾尔自治区', '新疆' => '新疆维吾尔自治区',
-        );
-        $key = strtolower($region);
-        return isset($provinceMap[$key]) ? $provinceMap[$key] : ($region !== '' ? $region : '中国');
+    if ($code === 'TW') {
+        return '中国台湾';
+    }
+    if ($code === 'CN') {
+        return $region !== '' ? $region : '中国';
     }
 
     return $country !== '' ? $country : '未知地区';
