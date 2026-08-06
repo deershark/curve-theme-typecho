@@ -285,7 +285,20 @@ function curve_archive_query_top_first($archive, $select)
             "table.contents.cid = table.fields.cid AND table.fields.name = 'top' AND table.fields.str_value = '1'",
             Typecho_Db::LEFT_JOIN
         );
-        $select->order('table.fields.cid', Typecho_Db::SORT_DESC);
+        /* PostgreSQL 的分类查询可能按 contents.cid 分组，排序字段需要聚合；
+         * 首页查询没有分组，不能使用 MAX，否则会把结果聚合成一行。
+         * MySQL 保留普通字段排序，避免影响原有分页行为。 */
+        $db = Typecho_Db::get();
+        $adapterName = method_exists($db, 'getAdapterName') ? strtolower((string) $db->getAdapterName()) : '';
+        $isPgsql = strpos($adapterName, 'pgsql') !== false || strpos($adapterName, 'postgres') !== false;
+        $hasGroup = method_exists($select, 'getAttribute') && trim((string) $select->getAttribute('group')) !== '';
+        if ($isPgsql && $hasGroup) {
+            $select->order('COALESCE(MAX(table.fields.cid), 0)', Typecho_Db::SORT_DESC);
+        } elseif ($isPgsql) {
+            $select->order('COALESCE(table.fields.cid, 0)', Typecho_Db::SORT_DESC);
+        } else {
+            $select->order('table.fields.cid', Typecho_Db::SORT_DESC);
+        }
         $select->order('table.contents.created', Typecho_Db::SORT_DESC);
     }
     Typecho_Db::get()->fetchAll($select, array($archive, 'push'));
