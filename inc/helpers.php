@@ -1710,6 +1710,7 @@ function curve_comment_form($archive, $comments, $options, $user, $commentUrl)
             <p>已登录为 <?php $user->screenName(); ?></p>
             <?php endif; ?>
         </div>
+        <?php if (class_exists('reCAPTCHAv3_Plugin') && is_callable(array('reCAPTCHAv3_Plugin', 'output'))): reCAPTCHAv3_Plugin::output(); endif; ?>
         <textarea name="text" rows="5" placeholder="<?php echo curve_esc($commentPlaceholder); ?>" required><?php $archive->remember('text'); ?></textarea>
         <button type="submit">提交评论</button>
     </form>

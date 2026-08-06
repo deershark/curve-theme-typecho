@@ -6493,6 +6493,20 @@ button.s-card,
   min-height: auto;
 }
 
+.link > .cat-or-tag + .markdown-main-style.s-card {
+  margin-top: 1.5rem;
+  padding: 1rem 2.2rem 2.2rem;
+  user-select: text;
+  cursor: auto;
+}
+
+@media (max-width: 768px) {
+  .link > .cat-or-tag + .markdown-main-style.s-card {
+    border: none;
+    padding: 20px 30px;
+  }
+}
+
 .link-config-errors,
 .link-config-empty,
 .link-config-help {
@@ -6536,7 +6550,16 @@ button.s-card,
 
 .cat-or-tag.privacy-page .privacy-content {
   margin-top: 2rem;
-  padding-bottom: 3rem;
+  padding: 1rem 2.2rem 3rem;
+  user-select: text;
+  cursor: auto;
+}
+
+@media (max-width: 768px) {
+  .cat-or-tag.privacy-page .privacy-content {
+    border: none;
+    padding: 20px 30px 3rem;
+  }
 }
 
 .markdown-main-style > h1 {

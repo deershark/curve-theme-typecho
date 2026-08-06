@@ -84,7 +84,7 @@ MARKDOWN
             <div class="link-config-empty s-card"><strong>友情链接页面还没有内容。</strong><p>请在正文中添加 curve-friends 配置块，下面提供了可直接复制的示例。</p></div>
             <div class="link-config-help s-card markdown-main-style"><?php echo curve_render_markdown($friendHelp); ?></div>
         <?php else: ?>
-            <div class="markdown-main-style">
+            <div class="markdown-main-style s-card">
                 <?php echo $pageHtml; ?>
             </div>
         <?php endif; ?>
