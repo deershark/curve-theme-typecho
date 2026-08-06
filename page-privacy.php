@@ -56,7 +56,7 @@ MARKDOWN;
         <div class="title">
             <h1 class="title-name"><?php $this->title(); ?></h1>
         </div>
-        <div id="page-content" class="markdown-main-style privacy-content"><?php echo curve_render_markdown($pageSource); ?></div>
+        <div id="page-content" class="markdown-main-style privacy-content s-card"><?php echo curve_render_markdown($pageSource); ?></div>
     </div>
 </main>
 <?php $this->need('footer.php'); ?>
