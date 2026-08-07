@@ -870,6 +870,44 @@
     selectTab(buttons.findIndex(function (button) { return button.getAttribute("aria-selected") === "true"; }), false);
   });
 
+  /* Format absolute comment timestamps in the viewer's local timezone. The
+   * server-rendered text remains a useful fallback before this script runs. */
+  function formatCommentTimes(root) {
+    var scope = root || document;
+    var times = scope.querySelectorAll ? scope.querySelectorAll("time[data-comment-time]") : [];
+    if (!times.length) return;
+
+    var formatter = null;
+    if (window.Intl && typeof window.Intl.DateTimeFormat === "function") {
+      try {
+        formatter = new window.Intl.DateTimeFormat(undefined, {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+      } catch (error) {}
+    }
+
+    Array.prototype.forEach.call(times, function (time) {
+      var timestamp = Number(time.getAttribute("data-comment-time"));
+      if (!isFinite(timestamp) || timestamp <= 0) return;
+      var date = new Date(timestamp * 1000);
+      if (isNaN(date.getTime())) return;
+
+      var formatted;
+      if (formatter) {
+        formatted = formatter.format(date);
+      } else {
+        var pad = function (value) { return value < 10 ? "0" + value : String(value); };
+        formatted = date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) + " " + pad(date.getHours()) + ":" + pad(date.getMinutes());
+      }
+      time.title = formatted;
+      if (time.getAttribute("data-comment-absolute") === "1") time.textContent = formatted;
+    });
+  }
+
   /* Submit Typecho comments in place. The endpoint still handles validation,
    * moderation and nested parents; we only replace the rendered comment area
    * with its redirected HTML response so the article itself never reloads. */
@@ -915,6 +953,7 @@
             pendingLabel = status ? status.textContent.trim() : "";
           });
           currentComment.replaceWith(nextComment);
+          formatCommentTimes(nextComment);
           bindCommentForms();
           var nextForm = nextComment.querySelector(".comment-form");
           var restoredTextField = nextForm && nextForm.querySelector("textarea[name=text]");
@@ -939,6 +978,7 @@
       });
     });
   }
+  formatCommentTimes(document);
   bindCommentForms();
 
   var settings = document.querySelector("[data-settings-modal]");
