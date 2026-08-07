@@ -15,6 +15,43 @@ function curve_option($options, $name, $default = '')
     return $value === '' ? $default : $value;
 }
 
+/** 读取并校验文章正文链接的打开方式。 */
+function curve_article_link_target($options)
+{
+    $target = curve_option($options, 'postLinkTarget', 'blank');
+    return in_array($target, array('self', 'blank'), true) ? $target : 'blank';
+}
+
+/** 将文章正文中的链接统一为主题设置的打开方式。 */
+function curve_apply_article_link_target($content, $target = 'blank')
+{
+    $target = in_array($target, array('self', 'blank'), true) ? $target : 'blank';
+    return preg_replace_callback('/<a\b([^>]*)>/i', function ($match) use ($target) {
+        $attributes = (string) $match[1];
+        if (preg_match('/\bclass\s*=\s*(["\'])(.*?)\1/i', $attributes, $classMatch)
+            && preg_match('/(?:^|\s)header-anchor(?:\s|$)/i', (string) $classMatch[2])) {
+            return $match[0];
+        }
+
+        $attributes = preg_replace('/\s+target\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', $attributes);
+        if ($target === 'blank') {
+            $attributes = rtrim($attributes) . ' target="_blank"';
+            $relCount = 0;
+            $attributes = preg_replace_callback('/\s+rel\s*=\s*(["\'])(.*?)\1/i', function ($relMatch) {
+                $rel = trim((string) $relMatch[2]);
+                if (!preg_match('/(?:^|\s)noopener(?:\s|$)/i', $rel)) {
+                    $rel .= ($rel === '' ? '' : ' ') . 'noopener';
+                }
+                return ' rel="' . curve_esc($rel) . '"';
+            }, $attributes, 1, $relCount);
+            if ($relCount === 0) {
+                $attributes .= ' rel="noopener"';
+            }
+        }
+        return '<a' . $attributes . '>';
+    }, (string) $content);
+}
+
 /** 校验主题设置中的背景图片地址。 */
 function curve_validate_background_url($value)
 {
