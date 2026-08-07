@@ -235,6 +235,9 @@ function themeConfig($form)
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Textarea(
         'fakeGptClickText', null, '你好，我是 FakeGPT：名字听起来很懂，实际上只负责把作者认真写好的摘要一个字一个字端上来。没有联网、没有偷看正文，也没有在后台煮咖啡；这段内容由作者亲自审核，放心食用。', _t('FakeGPT 点击文案'), _t('点击文章摘要卡片右上角的 FakeGPT 后显示的内容。')
     ));
+    $form->addInput(new Typecho_Widget_Helper_Form_Element_Select(
+        'postLinkTarget', array('self' => _t('本页打开'), 'blank' => _t('新标签页打开')), 'blank', _t('文章正文链接打开方式'), _t('控制文章正文中的 Markdown、HTML 和 LinkCard 链接；文章标题、分类、评论等页面结构链接不受影响。')
+    ));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Text('reportUrl', null, '', _t('投诉反馈地址'), _t('填写后在文章页显示“反馈与投诉”，并加入页脚服务链接；主题不内置反馈页面。')));
     $form->addInput(new Typecho_Widget_Helper_Form_Element_Text(
         'rewardWechat', null, '', _t('微信收款码地址'), _t('填写图片地址后，在文章页赞赏弹窗中显示微信收款码。')
