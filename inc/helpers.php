@@ -2046,6 +2046,7 @@ function threadedComments($comments, $options)
         $comments->date('U');
         $commentTime = (int) trim(ob_get_clean());
     }
+    $commentIsAbsolute = $commentTime > 0 && time() - $commentTime >= 2592000;
     ?>
     <li id="li-<?php $comments->theId(); ?>" class="comment-item">
         <article id="<?php $comments->theId(); ?>" class="comment-item__body<?php echo $isAuthor ? ' is-author-comment' : ''; ?>">
@@ -2057,7 +2058,7 @@ function threadedComments($comments, $options)
                     <?php $comments->reply(isset($options->replyWord) ? $options->replyWord : '回复'); ?>
                 </header>
                 <div class="comment-item__meta">
-                    <time datetime="<?php echo $commentTime > 0 ? date('c', $commentTime) : ''; ?>" title="<?php echo $commentTime > 0 ? date('Y-m-d H:i', $commentTime) : ''; ?>"><?php echo curve_esc(curve_comment_relative_time($comments)); ?></time>
+                    <time data-comment-time="<?php echo $commentTime > 0 ? $commentTime : ''; ?>" data-comment-absolute="<?php echo $commentIsAbsolute ? '1' : '0'; ?>" datetime="<?php echo $commentTime > 0 ? date('c', $commentTime) : ''; ?>" title="<?php echo $commentTime > 0 ? date('Y-m-d H:i', $commentTime) : ''; ?>"><?php echo curve_esc(curve_comment_relative_time($comments)); ?></time>
                     <?php if ($showSensitiveMeta): ?>
                     <span>IP 归属地: <?php echo curve_esc(curve_comment_location($commentIp)); ?></span>
                     <span>系统: <?php echo curve_esc(curve_comment_client_meta($commentAgent)); ?></span>
